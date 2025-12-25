@@ -1,19 +1,16 @@
 open Core
 
-type lit
-  = StrLit of string
-  | IntLit of int
-  | Ident of string
-  [@@deriving show, eq]
+type lit = StrLit of string | IntLit of int | Ident of string
+[@@deriving show, eq]
 
-type expr
-  = Index of expr * expr
+type expr =
+  | Index of expr * expr
   | Call of expr * expr list
   | Unary of string * expr
   | Binary of expr * string * expr
   | Paren of expr
   | Literal of lit
-  [@@deriving show, eq]
+[@@deriving show, eq]
 
 let rec flatten = function
   | Literal l -> Literal l
@@ -31,18 +28,17 @@ let applyExpr f = function
   | Unary (s, e) -> Unary (s, f e)
   | Binary (e1, s, e2) -> Binary (flatten e1, s, flatten e2)
 
-let rec flatten' = function
-  | Paren e -> flatten' e
-  | e -> applyExpr flatten' e
+let rec flatten' = function Paren e -> flatten' e | e -> applyExpr flatten' e
 
 module type FUNCTOR = sig
   type 'a t
+
   val map : ('a -> 'b) -> 'a t -> 'b t
 end
 
 module ExprF : FUNCTOR = struct
-  type 'a t
-    = IndexF of 'a * 'a
+  type 'a t =
+    | IndexF of 'a * 'a
     | CallF of 'a * 'a list
     | UnaryF of string * 'a
     | BinaryF of 'a * string * 'a
@@ -64,4 +60,4 @@ module ExprFFunctor : FUNCTOR with type 'a t = 'a ExprF.t = struct
  *)
 end
  *)
-                           (* type 'a term = In of 'a term 'a *)
+(* type 'a term = In of 'a term 'a *)

@@ -1,5 +1,6 @@
 (executables
-  (names examples examples1)
-  (flags -rectypes)
-  (libraries core recursion)
-  (preprocess (pps ppx_deriving.map ppx_deriving.show ppx_deriving.eq)))
+ (names examples plant)
+ (flags -rectypes)
+ (libraries core recursion)
+ (preprocess
+  (pps ppx_deriving.map ppx_deriving.show ppx_deriving.eq)))
