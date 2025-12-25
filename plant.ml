@@ -13,14 +13,6 @@ module Plant = struct
   module R = Recursion.Schemes.Make (F)
 end
 
-module Action = struct
-  type t = Flower | Upwards | Branch
-
-  let of_int_in_range (f : min:int -> max:int -> int) : t =
-    let v = f ~min:1 ~max:5 in
-    if v < 2 then Flower else if v < 3 then Branch else Upwards
-end
-
 let grow seed : Action.t * Seed.t =
   let act = Action.of_int_in_range (Seed.int_in_range ~seed) in
   (act, Seed.inc seed)
