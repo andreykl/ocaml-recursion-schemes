@@ -3,5 +3,7 @@ module Functor = struct
 end
 
 module Schemes = struct
-  module Make = Schemes.Schemes
+  module type S = Schemes.S
+
+  module Make = Schemes.Make
 end

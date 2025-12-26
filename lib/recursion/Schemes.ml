@@ -1,4 +1,20 @@
-module Schemes (F : Functor.Functor) = struct
+module type S = functor (F : Functor.Functor) -> sig
+  type 'a term = W of 'a term F.t
+  type 'a algebra
+  type ('b, 'a) ralgebra
+  type 'a attr
+  type 'a cvalgebra
+  type 'a coattr
+  type 'a cvcoalgebra
+
+  val cata : 'a algebra -> 'b term -> 'a
+  val para : ('b, 'a) ralgebra -> 'b term -> 'a
+  val histo : 'a cvalgebra -> 'b term -> 'a
+  val apo : ('a -> ('b term, 'a) Either.t F.t) -> 'a -> 'b term
+  val futu : 'a cvcoalgebra -> 'a -> 'b term
+end
+
+module Make (F : Functor.Functor) = struct
   type 'a term = W of 'a term F.t
   type 'a algebra = 'a F.t -> 'a
   type ('b, 'a) ralgebra = 'b term -> 'a F.t -> 'a

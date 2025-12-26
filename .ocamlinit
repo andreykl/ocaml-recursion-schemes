@@ -1,0 +1,11 @@
+(* .ocamlinit *)
+#use "topfind";;
+#require "core.top";;
+#directory "_build/default";;  (* Добавляем директорию сборки *)
+
+(* Загружаем нужные модули *)
+#mod_use "action.ml";;
+#mod_use "seed.ml";;
+
+(* Теперь можно загрузить plant.ml *)
+#use "plant.ml";;
