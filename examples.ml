@@ -36,8 +36,8 @@ let fib (s : int MyListR.attr list) : int =
 let rec gen (n : int) : int MyListR.term =
   if n <= 0 then MyListR.W [] else MyListR.W [ gen (n - 1) ]
 
-let fib1 = MyListR.histo'' fib (MyListR.W [])
-let fib2 = MyListR.histo'' fib (MyListR.W [ MyListR.W [] ])
+let fib1 = MyListR.histo' fib (MyListR.W [])
+let fib2 = MyListR.histo' fib (MyListR.W [ MyListR.W [] ])
 let fib3 = MyListR.histo' fib (MyListR.W [ MyListR.W [ MyListR.W [] ] ])
 
 let fib4 =
@@ -65,7 +65,7 @@ let t'2 = ExprR.W (Binary (t'1, "_", t'1))
 let fib'2 = ExprR.histo fib' t'2
 
 let fib4 =
-  MyListR.histo'' fib
+  MyListR.histo' fib
     (MyListR.W
        [
          MyListR.W
