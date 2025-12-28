@@ -3,7 +3,7 @@ module RS = Random.State
 type t = { height : int; rnst : RS.t; height_max : int }
 
 let split seed = { seed with rnst = RS.split seed.rnst }
-let int_in_range ~seed ~min ~max = RS.int_in_range seed.rnst ~min ~max
+let int_in_range seed ~min ~max = RS.int_in_range seed.rnst ~min ~max
 let inc seed = { seed with height = seed.height + 1 }
 let is_min seed = seed.height < 1
 let is_max seed = seed.height >= seed.height_max

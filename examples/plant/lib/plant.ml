@@ -11,7 +11,7 @@ end
 module R = Recursion.Schemes.Make (F)
 
 let grow seed : Action.t * Seed.t =
-  let act = Action.of_int_in_range (Seed.int_in_range ~seed) in
+  let act = Action.of_int_in_range (Seed.int_in_range seed) in
   (act, Seed.inc seed)
 
 let sow : Seed.t R.cvcoalgebra =
@@ -72,7 +72,7 @@ let to_string' : (string list * int * int) R.algebra =
         rlen + 1
         (* due to filling with space the rlines above *)
       in
-      let len, indent = (llen + clen + rlen, llen + cindent + 1) in
+      let len, indent = (llen + clen + rlen, llen + cindent) in
       let lines = List.map2 ( ^ ) llines (List.map2 ( ^ ) clines rlines) in
       let lline =
         String.make lindent ' ' ^ "+" ^ String.make (llen - lindent - 1) '-'
