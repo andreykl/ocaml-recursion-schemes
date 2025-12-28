@@ -29,7 +29,7 @@ let sow : Seed.t R.cvcoalgebra =
             R.Manual Bloom,
             R.Manual (Stalk (R.Automatic (Seed.split next))) )
 
-let to_string' : (string list * int * int) R.algebra =
+let to_string_algebra : (string list * int * int) R.algebra =
  fun plant ->
   let mk_line ~len ~indent ~ch_fill ~ch =
     String.make indent ch_fill ^ ch ^ String.make (len - indent - 1) ch_fill
@@ -86,7 +86,7 @@ let to_string' : (string list * int * int) R.algebra =
   | Bloom -> ([ "*" ], 1, 0)
 
 let to_string_list p =
-  let lines, _, _ = R.cata to_string' p in
+  let lines, _, _ = R.cata to_string_algebra p in
   lines
 
 let to_string p =
