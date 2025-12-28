@@ -1,2 +1,2 @@
-(lang dune 2.9)
-(name rec-part1)
+(lang dune 3.14)
+(name recursion)

@@ -12,12 +12,13 @@ module ExprR = Recursion.Schemes.Make (Expr)
 let f : int ExprR.attr Expr.t -> int = function
   | Expr.Literal _ -> 1
   | Expr.Binary (lhs, _, rhs) -> max lhs.attribute rhs.attribute + 1
-    
-let t = ExprR.W (Binary
-                   (ExprR.W (Binary 
-                               (ExprR.W (Literal "1"), "+", ExprR.W (Literal "2"))
-                      ), "+", 
-                    ExprR.W (Literal "3")))
+
+let t =
+  ExprR.W
+    (Binary
+       ( ExprR.W (Binary (ExprR.W (Literal "1"), "+", ExprR.W (Literal "2"))),
+         "+",
+         ExprR.W (Literal "3") ))
 
 module MyListR = Recursion.Schemes.Make (List)
 
@@ -25,23 +26,32 @@ let fib (s : int MyListR.attr list) : int =
   let open List in
   match s with
   | [] -> 1
-  | [x] -> (
-     match x.hole with
-     | [] -> 1
-     | [x'] -> x.attribute + x'.attribute
-     | _ -> 0)
+  | [ x ] -> (
+      match x.hole with
+      | [] -> 1
+      | [ x' ] -> x.attribute + x'.attribute
+      | _ -> 0)
   | _ -> 0
 
 let rec gen (n : int) : int MyListR.term =
-  if n <= 0 then MyListR.W [] 
-  else MyListR.W [gen (n-1)]
+  if n <= 0 then MyListR.W [] else MyListR.W [ gen (n - 1) ]
 
-let fib1 = MyListR.histo'' fib (MyListR.W [])
-let fib2 = MyListR.histo'' fib (MyListR.W [MyListR.W []])
-let fib3 = MyListR.histo' fib (MyListR.W [MyListR.W [MyListR.W []]])
-let fib4 = MyListR.histo' fib (MyListR.W [MyListR.W [MyListR.W [MyListR.W []]]])
-let fib5 = MyListR.histo' fib (MyListR.W [MyListR.W [MyListR.W [MyListR.W [MyListR.W []]]]])
-let fib6 = MyListR.histo' fib (MyListR.W [MyListR.W [MyListR.W [MyListR.W [MyListR.W [MyListR.W []]]]]])
+let fib1 = MyListR.histo' fib (MyListR.W [])
+let fib2 = MyListR.histo' fib (MyListR.W [ MyListR.W [] ])
+let fib3 = MyListR.histo' fib (MyListR.W [ MyListR.W [ MyListR.W [] ] ])
+
+let fib4 =
+  MyListR.histo' fib (MyListR.W [ MyListR.W [ MyListR.W [ MyListR.W [] ] ] ])
+
+let fib5 =
+  MyListR.histo' fib
+    (MyListR.W [ MyListR.W [ MyListR.W [ MyListR.W [ MyListR.W [] ] ] ] ])
+
+let fib6 =
+  MyListR.histo' fib
+    (MyListR.W
+       [ MyListR.W [ MyListR.W [ MyListR.W [ MyListR.W [ MyListR.W [] ] ] ] ] ])
+
 (*
 1 1 2 3 5
  *)
@@ -51,44 +61,47 @@ let fib' : int ExprR.attr Expr.t -> int = function
 
 let t'1 = ExprR.W (Literal "1")
 let fib'1 = ExprR.histo fib' t'1
-
 let t'2 = ExprR.W (Binary (t'1, "_", t'1))
 let fib'2 = ExprR.histo fib' t'2
 
-let fib4 = MyListR.histo'' fib (MyListR.W [MyListR.W [MyListR.W [MyListR.W []; MyListR.W []]; MyListR.W [MyListR.W []; MyListR.W []]]])
+let fib4 =
+  MyListR.histo' fib
+    (MyListR.W
+       [
+         MyListR.W
+           [
+             MyListR.W [ MyListR.W []; MyListR.W [] ];
+             MyListR.W [ MyListR.W []; MyListR.W [] ];
+           ];
+       ])
 
 module Change = struct
   type cent = int
 
   module type MyNatS = sig
     type 'a t = S of 'a | Z
+
     val map : ('a -> 'b) -> 'a t -> 'b t
   end
 
   module MyNat : MyNatS = struct
-
     type 'a t = S of 'a | Z
-    
-    let map (f : 'a -> 'b) : 'a t -> 'b t = 
-      function
-      | S a -> S (f a)
-      | Z -> Z
+
+    let map (f : 'a -> 'b) : 'a t -> 'b t = function S a -> S (f a) | Z -> Z
   end
 
   module NatR = struct
     include Recursion.Schemes.Make (MyNat)
 
     let rec expand (n : int) : 'a term =
-      if (n <= 0) then W MyNat.Z else W (MyNat.S (expand (n - 1)))
+      if n <= 0 then W MyNat.Z else W (MyNat.S (expand (n - 1)))
 
     let rec compress (W n : 'a term) =
-      match n with
-      | MyNat.Z -> 0
-      | MyNat.S wn -> compress wn + 1
+      match n with MyNat.Z -> 0 | MyNat.S wn -> compress wn + 1
   end
 
-  let coins : cent list = [50; 25; 10; 5; 1]
-(*
+  let coins : cent list = [ 50; 25; 10; 5; 1 ]
+  (*
   let change (amt : cent) : int =
     let rec take_cnt_minus (n : int) : int NatR.attr MyNat.t -> int = function
       | MyNat.Z -> 0
@@ -107,9 +120,9 @@ module Change = struct
  *)
 end
 
-
-let main = 
-  let fld = ExprR.histo f t in Format.printf "%d\n" fld
+let main =
+  let fld = ExprR.histo f t in
+  Format.printf "%d\n" fld
 
 (* val fib4 : int MyListR.attr = *)
 (*   {MyListR.attribute = 2; *)
@@ -125,7 +138,6 @@ let main =
 (*                             List.(::) ({MyListR.attribute = 1; hole = List.[]}, *)
 (*                                        [{MyListR.attribute = 1; hole = List.[]}])}])}, *)
 (*              [])} *)
-
 
 (*
 ExprR.W (Binary
@@ -192,7 +204,6 @@ let main =
   let str = show_tree pp_s t in
   Format.printf "tree: %s\n" str
  *)
-
 
 (*
 let rec pp_tree' fmt = function

@@ -1,0 +1,4 @@
+(* .ocamlinit *)
+#use "topfind";;
+#require "core.top";;
+#directory "_build/default";;
