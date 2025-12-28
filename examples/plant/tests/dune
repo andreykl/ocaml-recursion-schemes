@@ -1,0 +1,4 @@
+(tests
+ (names plant_test)
+ (modules Plant_test)
+ (libraries plant_internal_lib recursion alcotest))

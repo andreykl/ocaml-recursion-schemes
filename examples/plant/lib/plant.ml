@@ -8,7 +8,6 @@ module F = struct
     | Bloom -> Bloom
 end
 
-include F
 module R = Recursion.Schemes.Make (F)
 
 let grow seed : Action.t * Seed.t =
@@ -30,21 +29,7 @@ let sow : Seed.t R.cvcoalgebra =
             R.Manual Bloom,
             R.Manual (Stalk (R.Automatic (Seed.split next))) )
 
-(* type indent = { left : int; own : int; right : int } *)
-
-let get_width : int R.algebra = function
-  | Root d -> d
-  | Stalk d -> d
-  | Fork (dl, dc, dr) -> dl + 3 + dc + 3 + dr
-  | Bloom -> 1
-
-(* let to_string : (string list * int * int) R.cvalgebra = function *)
-(*   | Root (ss, len, wleft) -> List.init wleft (fun _ -> " ") *)
-(*   | Stalk d -> d *)
-(*   | Fork (dl, dc, dr) -> dl + 3 + dc + 3 + dr *)
-(*   | Bloom -> 1 *)
-
-let to_string : (string list * int * int) R.algebra =
+let to_string' : (string list * int * int) R.algebra =
  fun plant ->
   let mk_line ~len ~indent ~ch_fill ~ch =
     String.make indent ch_fill ^ ch ^ String.make (len - indent - 1) ch_fill
@@ -89,7 +74,6 @@ let to_string : (string list * int * int) R.algebra =
       in
       let len, indent = (llen + clen + rlen, llen + cindent + 1) in
       let lines = List.map2 ( ^ ) llines (List.map2 ( ^ ) clines rlines) in
-      (* let line = "+" ^ mk_line (len - 2) (indent - 1) '-' "+" ^ "+" in *)
       let lline =
         String.make lindent ' ' ^ "+" ^ String.make (llen - lindent - 1) '-'
       in
@@ -101,39 +85,10 @@ let to_string : (string list * int * int) R.algebra =
       ((lline ^ "+" ^ rline) :: lines, len, indent)
   | Bloom -> ([ "*" ], 1, 0)
 
-let print p =
-  let lines, _, _ = R.cata to_string p in
-  String.concat "\n" (List.rev lines) |> print_endline
+let to_string_list p =
+  let lines, _, _ = R.cata to_string' p in
+  lines
 
-let p1 : 'a R.term = R.W (F.Root (R.W F.Bloom))
-let p2 : 'a R.term = R.W (F.Root (R.W (F.Stalk (R.W F.Bloom))))
-
-let p3 : 'a R.term =
-  R.W
-    (F.Root
-       (R.W
-          (F.Stalk
-             (R.W
-                (F.Fork
-                   ( R.W (F.Stalk (R.W F.Bloom)),
-                     R.W F.Bloom,
-                     R.W (F.Stalk (R.W F.Bloom)) ))))))
-
-let _ = print_endline
-let _ = print_endline
-let _ = print_endline "------------------- P1 ---------------"
-let _ = print p1
-let _ = print_endline
-let _ = print_endline "------------------- P2 ---------------"
-let _ = print p2
-let _ = print_endline
-let _ = print_endline "------------------- P3 ---------------"
-let _ = print p3
-
-(*
-open Pretty_expressive
-
-let cf = Printer.default_cost_factory ~page_width:80 ()
-module P = Printer.Make (val cf)
-open P
- *)
+let to_string p =
+  let lines = to_string_list p in
+  String.concat "\n" (List.rev lines)

@@ -2,3 +2,8 @@
 #use "topfind";;
 #require "core.top";;
 #directory "_build/default";;
+
+#mod_use "lib/action.ml";;
+#mod_use "lib/seed.ml";;
+#mod_use "lib/plant.ml";;
+

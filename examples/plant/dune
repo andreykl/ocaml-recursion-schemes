@@ -1,0 +1,4 @@
+(executable
+ (name plant)
+ (libraries plant_internal_lib recursion)
+ (modules Plant))

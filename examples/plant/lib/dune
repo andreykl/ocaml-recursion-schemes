@@ -1,0 +1,4 @@
+(library
+ (name plant_internal_lib)
+ (libraries recursion)
+ (modules Action Seed Plant))
