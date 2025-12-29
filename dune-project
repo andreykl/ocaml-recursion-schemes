@@ -2,6 +2,8 @@
 (name recursion)
 (package
  (name recursion)
+ (synopsis "recursion schemes for OCaml")
+ (authors "Klaus Andrey <klaus.ai1983@gmail.com>")
  (depends
   (ocaml (>= 5.2.1))
   (core (>= 0.17.1))
