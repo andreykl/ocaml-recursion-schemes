@@ -34,6 +34,9 @@ let test_change_20 () =
 let test_change_25 () =
   check int "trying to change 25 cents" 13 @@ Change.change 25
 
+let test_change_40 () =
+  check int "trying to change 40 cents" 31 @@ Change.change 40
+
 let suite =
   [
     test_case "change 0" `Quick test_change_0;
@@ -52,6 +55,7 @@ let suite =
     test_case "change 16" `Quick test_change_16;
     test_case "change 20" `Quick test_change_20;
     test_case "change 25" `Quick test_change_25;
+    test_case "change 40" `Quick test_change_40;
   ]
 
 let () = run "Change Tests" [ ("Tests for changing amounts", suite) ]
