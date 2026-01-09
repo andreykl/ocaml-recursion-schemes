@@ -7,7 +7,7 @@
  (maintainers "Klaus Andrey <klaus.ai1983@gmail.com>")
  (authors "Klaus Andrey <klaus.ai1983@gmail.com>")
  (depends
-  (ocaml (>= 5.2.1))
+  (ocaml (= 5.2.1))
   (core (>= 0.17.1))
   (ppx_deriving (>= 6.0.3))
   (alcotest :with-test)))
