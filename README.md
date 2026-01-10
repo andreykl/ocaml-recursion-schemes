@@ -12,12 +12,19 @@ $ dune build
 
 ```
 
+To run the examples
+
 ```bash
 
 $ dune exec ./examples/plant/plant.exe
+$ dune exec ./examples/change/change.exe
 
 ```
 
-* Meijer, Erik; Fokkinga, Maarten; Paterson, Ross. (2000).
-Functional Programming with Bananas, Lenses, Envelopes and
-Barbed Wire. 523. doi:10.1007/3540543961_7.
+### Recommended Resources
+
+| Resource | Description |
+|----------|-------------|
+| [*Functional Programming with Bananas, Lenses, Envelopes and Barbed Wire](https://maartenfokkinga.github.io/utwente/mmf91m.pdf) | The seminal paper introducing recursion schemes |
+| [Practical Recursion Schemes](https://blog.sumtypeofway.com/archive.html) | Excellent tutorial series by Patrick Thomson |
+| [recursion-schemes Haskell package](https://hackage.haskell.org/package/recursion-schemes) | The canonical implementation |
