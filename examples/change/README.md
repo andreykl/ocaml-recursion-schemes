@@ -92,6 +92,6 @@ This example demonstrates recursion schemes – a powerful technique for handlin
 | Resource | Description |
 |----------|-------------|
 | [Functional Programming with Bananas, Lenses, Envelopes and Barbed Wire](https://maartenfokkinga.github.io/utwente/mmf91m.pdf) | The seminal paper introducing recursion schemes |
-| [Practical Recursion Schemes](https://blog.sumtypeofway.com) | Excellent tutorial series by Patrick Thomson |
+| [Practical Recursion Schemes](https://blog.sumtypeofway.com/archive.html) | Excellent tutorial series by Patrick Thomson |
 | [recursion-schemes Haskell package](https://hackage.haskell.org/package/recursion-schemes) | The canonical implementation |
-| [OCaml Recursion Schemes](https://github.com/ocamllabs/ocaml-recursion-schemes) | OCaml-specific implementations |
+
