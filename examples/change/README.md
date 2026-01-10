@@ -28,7 +28,16 @@ To run the example (from the current directory):
 
 ```bash
 
-$ dune exec ./plant.exe
+$ dune exec ./change.exe
+
+```
+
+
+To run the example (from the project root):
+
+```bash
+
+$ dune exec ./examples/change/change.exe
 
 ```
 
