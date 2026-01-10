@@ -25,7 +25,7 @@ $ dune build
 
 ```
 
-To run the example:
+To run the example (from the current directory):
 
 ```bash
 
@@ -33,4 +33,4 @@ $ dune exec ./plant.exe
 
 ```
 
-Most of the code is located in lib/plant.ml.
+Most of the code is located in `lib/plant.ml`.
