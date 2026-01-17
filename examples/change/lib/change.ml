@@ -1,17 +1,27 @@
 type cent = int
 
+module RS = Recursion_schemes.Schemes
+
 module NatR = struct
-  module MyNat = struct
+  module NatF = struct
     type 'a t = S of 'a | Z
 
     let map (f : 'a -> 'b) : 'a t -> 'b t = function S a -> S (f a) | Z -> Z
   end
 
-  include MyNat
-  include Recursion.Schemes.Make (MyNat)
+  include NatF
 
-  let rec expand (n : int) : 'a term =
-    if n <= 0 then W Z else W (S (expand (n - 1)))
+  module Nat = struct
+    module Base = NatF
+
+    type t = S of t | Z
+
+    let project = function Z -> Base.Z | S n -> Base.S n
+  end
+
+  include RS.Recursion.Make (NatF) (Nat)
+
+  let rec expand (n : int) : Nat.t = if n <= 0 then Z else S (expand (n - 1))
 end
 
 let coins : cent list = [ 50; 25; 10; 5; 1 ]
@@ -28,7 +38,7 @@ let coins : cent list = [ 50; 25; 10; 5; 1 ]
       The attribute structure [n] levels deeper than [given]. If [given] is
       [NatR.Z], returns [NatR.Z] unchanged. If [n ≤ 0], returns [given]
       unchanged. *)
-let rec sub (given : _ NatR.attr NatR.t) (n : int) : _ NatR.attr NatR.t =
+let rec sub (given : _ NatR.attr NatR.t) (n : int) : _ NatR.attr NatR.NatF.t =
   match given with
   | NatR.Z -> given
   | NatR.S { NatR.hole = h; _ } ->
@@ -75,26 +85,29 @@ let change (amt : cent) : int =
            using the provided list of coin types
          *)
         let n, res =
-          match List.rev coins with
+          match coins with
           | [] -> (1, [ (0, 1) ])
           | coins ->
-              let n, res, _ =
-                List.fold_left
-                  (fun (cnt, ways, coins) c ->
+              let module ListF = RS.Predef.List.Make (struct
+                type t = cent
+              end) in
+              let go = function
+                | ListF.F.Nil -> (0, [], [])
+                | ListF.F.Cons (c, (cnt, ways, coins)) ->
                     let coins = c :: coins in
                     let n =
                       if c = 1 then 1
                       else
                         (* 
-                           c - 1 is used because we need information stored at
-                           the level above what we actually need
-                        *)
+                         c - 1 is used because we need information stored at
+                         the level above what we actually need
+                       *)
                         get_change ~coins (sub curr (c - 1))
                     in
                     let cnt = cnt + n in
-                    (cnt, (List.length coins, cnt) :: ways, coins))
-                  (0, [], []) coins
+                    (cnt, (List.length coins, cnt) :: ways, coins)
               in
+              let n, res, _ = ListF.R.cata go coins in
               (n, res)
         in
         (*

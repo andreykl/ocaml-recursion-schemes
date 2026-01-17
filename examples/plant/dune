@@ -1,4 +1,4 @@
 (executable
  (name plant)
- (libraries plant_internal_lib recursion)
+ (libraries plant_internal_lib recursion_schemes)
  (modules Plant))
