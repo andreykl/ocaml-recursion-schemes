@@ -1,5 +1,7 @@
 type cent = int
 
+module RS = Recursion_schemes.Schemes
+
 module NatR = struct
   module NatF = struct
     type 'a t = S of 'a | Z
@@ -17,7 +19,6 @@ module NatR = struct
     let project = function Z -> Base.Z | S n -> Base.S n
   end
 
-  module RS = Recursion_schemes.Schemes
   include RS.Recursion.Make (NatF) (Nat)
 
   let rec expand (n : int) : Nat.t = if n <= 0 then Z else S (expand (n - 1))
@@ -84,26 +85,29 @@ let change (amt : cent) : int =
            using the provided list of coin types
          *)
         let n, res =
-          match List.rev coins with
+          match coins with
           | [] -> (1, [ (0, 1) ])
           | coins ->
-              let n, res, _ =
-                List.fold_left
-                  (fun (cnt, ways, coins) c ->
+              let module ListF = RS.Predef.List.Make (struct
+                type t = cent
+              end) in
+              let go = function
+                | ListF.F.Nil -> (0, [], [])
+                | ListF.F.Cons (c, (cnt, ways, coins)) ->
                     let coins = c :: coins in
                     let n =
                       if c = 1 then 1
                       else
                         (* 
-                           c - 1 is used because we need information stored at
-                           the level above what we actually need
-                        *)
+                         c - 1 is used because we need information stored at
+                         the level above what we actually need
+                       *)
                         get_change ~coins (sub curr (c - 1))
                     in
                     let cnt = cnt + n in
-                    (cnt, (List.length coins, cnt) :: ways, coins))
-                  (0, [], []) coins
+                    (cnt, (List.length coins, cnt) :: ways, coins)
               in
+              let n, res, _ = ListF.R.cata go coins in
               (n, res)
         in
         (*

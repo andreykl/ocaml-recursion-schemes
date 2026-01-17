@@ -19,3 +19,7 @@ end
 module Embed = struct
   module type S = Embed.S
 end
+
+module Predef = struct
+  module List = ListRec
+end
