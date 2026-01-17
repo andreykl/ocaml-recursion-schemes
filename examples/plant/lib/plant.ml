@@ -8,26 +8,61 @@ module F = struct
     | Bloom -> Bloom
 end
 
-module R = Recursion.Schemes.Make (F)
+module P = struct
+  type t = Root of t | Stalk of t | Fork of t * t * t | Bloom
+
+  let map f = function
+    | Root t -> Root (f t)
+    | Stalk t -> Stalk (f t)
+    | Fork (tl, tc, tr) -> Fork (f tl, f tc, f tr)
+    | Bloom -> Bloom
+end
+
+module RS = Recursion_schemes.Schemes
+
+module Project = struct
+  module Base = F
+  include P
+
+  let project = function
+    | Root t -> F.Root t
+    | Stalk t -> F.Stalk t
+    | Fork (tl, tc, tr) -> F.Fork (tl, tc, tr)
+    | Bloom -> F.Bloom
+end
+
+module Embed = struct
+  module Base = F
+  include P
+
+  let embed = function
+    | F.Root a -> Root a
+    | F.Stalk a -> Stalk a
+    | F.Fork (l, c, r) -> Fork (l, c, r)
+    | F.Bloom -> Bloom
+end
+
+module R = RS.Recursion.Make (F) (Project)
+module CR = RS.Corecursion.Make (F) (Embed)
 
 let grow seed : Action.t * Seed.t =
   let act = Action.of_int_in_range (Seed.int_in_range seed) in
   (act, Seed.inc seed)
 
-let sow : Seed.t R.cvcoalgebra =
+let sow : Seed.t CR.cvcoalgebra =
  fun seed ->
   let act, next = grow seed in
-  if Seed.is_min seed then Root (R.Automatic next)
+  if Seed.is_min seed then Root (CR.Automatic next)
   else if Seed.is_max seed then Bloom
   else
     match act with
     | Action.Flower -> Bloom
-    | Action.Upwards -> Stalk (R.Automatic next)
+    | Action.Upwards -> Stalk (CR.Automatic next)
     | Action.Branch ->
         Fork
-          ( R.Manual (Stalk (R.Automatic next)),
-            R.Manual Bloom,
-            R.Manual (Stalk (R.Automatic (Seed.split next))) )
+          ( CR.Manual (Stalk (CR.Automatic next)),
+            CR.Manual Bloom,
+            CR.Manual (Stalk (CR.Automatic (Seed.split next))) )
 
 let to_string_algebra : (string list * int * int) R.algebra =
  fun plant ->

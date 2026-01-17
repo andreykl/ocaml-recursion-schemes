@@ -3,23 +3,17 @@ open Alcotest
 
 let test_height_1 () =
   check (list string) "tree of height 1" [ "^"; "*" ]
-    (to_string_list (R.W (F.Root (R.W F.Bloom))))
+    (to_string_list (P.Root P.Bloom))
 
 let test_height_2_simple () =
   check (list string) "tree of height 2 simple" [ "^"; "|"; "*" ]
-    (to_string_list (R.W (F.Root (R.W (F.Stalk (R.W F.Bloom))))))
+    (to_string_list (P.Root (P.Stalk P.Bloom)))
 
 let test_height_2_fork () =
   check (list string) "tree of height 2 fork"
     [ "  ^  "; "+-+-+"; "| * |"; "*   *" ]
     (to_string_list
-       (R.W
-          (F.Root
-             (R.W
-                (F.Fork
-                   ( R.W (F.Stalk (R.W F.Bloom)),
-                     R.W F.Bloom,
-                     R.W (F.Stalk (R.W F.Bloom)) ))))))
+       (P.Root (P.Fork (P.Stalk P.Bloom, P.Bloom, P.Stalk P.Bloom))))
 
 let suite =
   [

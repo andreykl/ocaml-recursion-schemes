@@ -1,4 +1,4 @@
 (executable
  (name change)
- (libraries change_internal_lib recursion)
+ (libraries change_internal_lib recursion_schemes)
  (modules Change))

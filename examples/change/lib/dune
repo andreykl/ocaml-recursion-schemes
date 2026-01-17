@@ -1,4 +1,4 @@
 (library
  (name change_internal_lib)
- (libraries recursion)
+ (libraries recursion_schemes)
  (modules Change))
