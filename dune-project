@@ -1,4 +1,4 @@
-(lang dune 3.17)
+(lang dune 3.20)
 (name recursion)
 (package
  (name recursion)
@@ -10,5 +10,7 @@
   (ocaml (= 5.2.1))
   (core (>= 0.17.1))
   (ppx_deriving (>= 6.0.3))
+  (ppxlib (>= 0.35.0))
+  (ppx_expect :with-test)
   (alcotest :with-test)))
 (generate_opam_files true)
