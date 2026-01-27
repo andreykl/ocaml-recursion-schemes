@@ -1,9 +1,13 @@
 open Ppxlib
 
-let str_type_decl ~ctxt (_rec_flag, _tdecls) =
+let str_type_decl ~ctxt (_rec_flag, tdecls) =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
   let open Ast_builder.Default in
-  let x = "Z" in
+  let () = match tdecls with
+    | [_] -> ()
+    | _ -> failwith "we should not be here ever!"
+  in
+  let x = "VVVVV" in
 
   (* let st = [ pstr_type ~loc rec_flag tdecls ] in *)
   (* let _s = Format.asprintf "DERIVING input tdecls:\n%a\n%!" Pprintast.structure st in *)

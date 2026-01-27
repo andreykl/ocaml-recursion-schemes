@@ -18,9 +18,9 @@ It is especially useful when you want to see:
 2. Parses the source into an OCaml Parsetree.
 3. Runs the `ppxlib` driver (`Ppxlib.Driver.map_structure`), which applies all registered
    transformations (derivers, extensions, etc.).
-4. Prints either:
-   - the resulting AST "tree" (similar to `ocamlc -dparsetree`), or
-   - the resulting expanded OCaml source code.
+4. Prints the result for the selected AST stage (`raw` = before PPX, `expanded` = after PPX, default) and output view:
+   - `tree`: the AST dump (similar to `ocamlc -dparsetree`), default
+   - `source`: the pretty-printed OCaml code
 
 > Important: for derivers to run, the executable must **link** the library/module that
 > registers them (i.e. executes `Deriving.add ...` at initialization time).  
