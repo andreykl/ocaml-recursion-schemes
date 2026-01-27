@@ -36,7 +36,7 @@ However, in modern setups (OCaml 5.x + `ppxlib`) it is usually not the best opti
   with newer compiler AST versions.
 - `dumpast` is itself “just another PPX”, so you must place it at exactly the right point
   in the PPX pipeline to see the AST **after** your deriver runs.
-- It is not easy to install `ppx_tools` alongside `OCaml 5.2` (if it is even possible at all).
+- it is not easy to install `ppx_tools` alongside `OCaml 5.2` (if it is even possible at all).
 
 This tool makes the pipeline explicit and reproducible:
 
