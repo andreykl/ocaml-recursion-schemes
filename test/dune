@@ -1,0 +1,6 @@
+(library
+ (name base_functor_tests)
+ (inline_tests)
+ (libraries ppxlib compiler-libs.common ppx_expect base_functor)
+ (preprocess
+  (pps ppx_expect)))
