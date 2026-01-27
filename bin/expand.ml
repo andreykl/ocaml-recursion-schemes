@@ -7,10 +7,11 @@
   1) Reads an OCaml implementation either from a file (positional FILE argument)
      or from stdin (if FILE is omitted).
   2) Parses the input into a Parsetree using the compiler parser.
-  3) Runs ppxlib's driver on the parsed structure (Driver.map_structure),
+  3) Runs ppxlib's driver on the parsed structure ([Driver.map_structure]),
      which applies all registered transformations (extensions, derivers, etc.).
      Important: this works only if the executable links in the library/module
-     that registers your deriver (i.e. executes Deriving.add at startup).
+     that registers your deriver (i.e. executes [Deriving.add] at startup; e.g. we add
+     [base_functor] to the [libraries] stanza in the [dune] file).
   4) Prints the result in one of two modes:
      - --mode tree   : prints an AST "tree" representation (like ocamlc -dparsetree).
                        To do that, we convert ppxlib's selected AST representation
@@ -19,9 +20,9 @@
      - --mode source : pretty-prints the expanded OCaml source code.
 
   Usage examples:
-    dune exec ./bin/expand.exe -- --mode tree   path/to/file.ml
-    dune exec ./bin/expand.exe -- --mode source path/to/file.ml
-    echo 'type t = int [@@deriving base_functor]' | dune exec ./bin/expand.exe -- --mode tree
+    dune exec ./expand.exe -- --mode tree   path/to/file.ml
+    dune exec ./expand.exe -- --mode source path/to/file.ml
+    echo 'type t = int [@@deriving base_functor]' | dune exec ./expand.exe -- --mode tree
 
   Notes about AST types:
   - ppxlib internally works with a "selected" AST (from the ppxlib/astlib world),

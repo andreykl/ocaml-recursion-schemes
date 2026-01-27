@@ -25,18 +25,16 @@ It is especially useful when you want to see:
 > Important: for derivers to run, the executable must **link** the library/module that
 > registers them (i.e. executes `Deriving.add ...` at initialization time).  
 > In practice that means `expand` must depend on your PPX library (e.g. `base_functor`)
-> in `bin/dune`.
+> in `dune`.
 
 ## Why this tool exists (why not `ppx_tools` / `dumpast`?)
 
 Historically, `ppx_tools` (including `dumpast`) was a convenient way to inspect ASTs.
 However, in modern setups (OCaml 5.x + `ppxlib`) it is usually not the best option:
 
-- `ppx_tools` belongs to an older PPX ecosystem and is often outdated or incompatible
-  with newer compiler AST versions.
+- `ppx_tools` belongs to an older PPX ecosystem and is often outdated or incompatible with newer compiler AST versions (this means that it is not easy to install `ppx_tools` alongside OCaml 5.x, if it is even possible at all).
 - `dumpast` is itself “just another PPX”, so you must place it at exactly the right point
   in the PPX pipeline to see the AST **after** your deriver runs.
-- it is not easy to install `ppx_tools` alongside `OCaml 5.2` (if it is even possible at all).
 
 This tool makes the pipeline explicit and reproducible:
 
@@ -62,8 +60,8 @@ This tool makes the pipeline explicit and reproducible:
 
 ```sh
 
-dune exec ./bin/expand.exe -- --mode tree path/to/file.ml
-dune exec ./bin/expand.exe -- --mode source path/to/file.ml
+dune exec ./expand.exe -- --mode tree path/to/file.ml
+dune exec ./expand.exe -- --mode source path/to/file.ml
 
 ```
 
@@ -72,17 +70,17 @@ dune exec ./bin/expand.exe -- --mode source path/to/file.ml
 ```sh
 
 echo 'type t = int [@@deriving base_functor]' \
-  | dune exec ./bin/expand.exe -- --mode tree
+  | dune exec ./expand.exe -- --mode tree
 
 ```
 
 ## Notes
 
 * If you see that nothing expands, it usually means your PPX registration code was not
-linked into the executable. Ensure bin/dune depends on the library that contains
-Deriving.add ....
-
-* If you only need a quick compiler-style dump and you already have a working -ppx
+  linked into the executable. Ensure `dune` depends on the library that contains
+  `Deriving.add ...` (in our case, `base_functor` is added to the `libraries` stanza in
+  the `dune` file).
+* If you only need a quick compiler-style dump and you already have a working `-ppx`
 invocation, an alternative is:
 
 ```sh
@@ -91,5 +89,5 @@ ocamlc -dparsetree -ppx ./your_ppx.exe -c file.ml
 
 ```
 
-The advantage of expand is that it avoids a full compilation step and is often
+The advantage of `expand` is that it avoids a full compilation step and is often
 easier to run iteratively while developing a PPX.
