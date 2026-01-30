@@ -1,3 +1,5 @@
+# Attention! No public release yet!
+
 # Recursion Schemes Library for OCaml
 
 This library implements `cata-`, `para-`, `histo-`, `ana-`, `apo-`, and `futu-` 
