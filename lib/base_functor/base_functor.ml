@@ -2,7 +2,8 @@ module StringSet = Set.Make (String)
 open Ppxlib
 
 let str_type_decl ~ctxt (rec_flag, tdecls) =
-  let loc : location = Expansion_context.Deriver.derived_item_loc ctxt in
+  let loc_code : location = Expansion_context.Deriver.derived_item_loc ctxt in
+  let loc = { loc_code with loc_ghost = true } in
   if rec_flag = Nonrecursive then
     Location.raise_errorf ~loc
       "base_functor can be derived for recursive data types only"
@@ -91,7 +92,7 @@ let str_type_decl ~ctxt (rec_flag, tdecls) =
         let map_type (ct : core_type) : core_type =
           let ct = { ct with ptyp_loc = loc } in
           match ct.ptyp_desc with
-          | Ptyp_constr ({ txt = Lident tname'; _ }, []) ->
+          | Ptyp_constr ({ txt = Lident tname'; _ }, _) ->
               if tname = tname' then { ct with ptyp_desc = Ptyp_var param_name }
               else ct
           | _ -> ct
@@ -131,7 +132,7 @@ let str_type_decl ~ctxt (rec_flag, tdecls) =
         in
 
         let params =
-          params @ [ (ptyp_var ~loc param_name, (NoVariance, NoInjectivity)) ]
+          (ptyp_var ~loc param_name, (NoVariance, NoInjectivity)) :: params
         in
         let ctors = List.map map_constructor ctors in
         let base_functor_decl : type_declaration =
@@ -140,7 +141,6 @@ let str_type_decl ~ctxt (rec_flag, tdecls) =
             ~params ~cstrs:[] ~kind:(Ptype_variant ctors) ~private_:Public
             ~manifest:None
         in
-
         [ pstr_type ~loc Nonrecursive [ base_functor_decl ] ]
     | _ ->
         Location.raise_errorf ~loc
