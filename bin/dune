@@ -1,3 +1,4 @@
+
 (executable
  (name expand)
- (libraries ppxlib ppxlib.ast compiler-libs.common cmdliner base_functor))
+ (libraries ppxlib ppxlib.ast compiler-libs.common cmdliner recursion_schemes.ppx))

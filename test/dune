@@ -2,7 +2,7 @@
  (name base_functor_tests)
  (modules base_functor_tests)
  (inline_tests)
- (libraries ppxlib compiler-libs.common ppx_expect base_functor)
+ (libraries ppxlib compiler-libs.common ppx_expect recursion_schemes.ppx)
  (preprocess
   (pps ppx_expect)))
 
@@ -10,15 +10,15 @@
  (name nat_tests)
  (modules nat_test)
  (inline_tests)
- (libraries ppxlib compiler-libs.common ppx_expect base_functor)
+ (libraries ppxlib compiler-libs.common ppx_expect recursion_schemes.ppx)
  (preprocess
   (pps ppx_expect)))
 
 (library
- (name cons_params012_tests)
- (modules cons_params012_test)
+ (name ctor_params012_tests)
+ (modules ctor_params012_test)
  (inline_tests)
- (libraries ppxlib compiler-libs.common ppx_expect base_functor)
+ (libraries ppxlib compiler-libs.common ppx_expect recursion_schemes.ppx)
  (preprocess
   (pps ppx_expect)))
 
@@ -26,7 +26,7 @@
  (name list_tests)
  (modules list_test)
  (inline_tests)
- (libraries ppxlib compiler-libs.common ppx_expect base_functor)
+ (libraries ppxlib compiler-libs.common ppx_expect recursion_schemes.ppx)
  (preprocess
   (pps ppx_expect)))
 
@@ -34,6 +34,6 @@
  (name tree_tests)
  (modules tree_test)
  (inline_tests)
- (libraries ppxlib compiler-libs.common ppx_expect base_functor)
+ (libraries ppxlib compiler-libs.common ppx_expect recursion_schemes.ppx)
  (preprocess
   (pps ppx_expect)))
