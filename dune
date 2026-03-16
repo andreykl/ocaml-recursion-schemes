@@ -1,5 +1,5 @@
 (executables
  (names examples)
- (libraries core recursion)
+ (libraries core recursion_schemes)
  (preprocess
   (pps ppx_deriving.map ppx_deriving.show ppx_deriving.eq)))

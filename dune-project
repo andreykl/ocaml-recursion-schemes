@@ -1,7 +1,7 @@
 (lang dune 3.20)
-(name recursion)
+(name recursion_schemes)
 (package
- (name recursion)
+ (name recursion_schemes)
  (synopsis "recursion schemes for OCaml")
  (description "recursion schemes for OCaml")
  (maintainers "Klaus Andrey <aklaus.code@gmail.com>")

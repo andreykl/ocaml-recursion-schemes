@@ -9,10 +9,10 @@ let expand_impl (src : string) : string =
 
 let%expect_test "type t = Lit of int | Add of t * t | Neg of t: map applies f to recursive positions" =
   print_string (expand_impl {|
-    type t = Lit of int | Add of t * t | Neg of t [@@deriving base_functor]
+    type t = Lit of int | Add of t * t | Neg of t [@@deriving recursion_schemes]
   |});
   [%expect {|
-    type t = Lit of int | Add of t * t | Neg of t [@@deriving base_functor]
+    type t = Lit of int | Add of t * t | Neg of t [@@deriving recursion_schemes]
     include struct
       module Base = struct
         type 'a t = Lit of int | Add of 'a * 'a | Neg of 'a

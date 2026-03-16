@@ -9,10 +9,10 @@ let expand_impl (src : string) : string =
 
 let%expect_test "type t = Zero | Succ of t: generates Base, Project, Embed, include" =
   print_string (expand_impl {|
-    type t = Zero | Succ of t [@@deriving base_functor]
+    type t = Zero | Succ of t [@@deriving recursion_schemes]
   |});
   [%expect {|
-    type t = Zero | Succ of t [@@deriving base_functor]
+    type t = Zero | Succ of t [@@deriving recursion_schemes]
     include struct
       module Base = struct
         type 'a t = Zero | Succ of 'a
@@ -34,10 +34,10 @@ let%expect_test "type t = Zero | Succ of t: generates Base, Project, Embed, incl
 
 let%expect_test "type nat = Zero | Succ of nat: generates BaseNat, ProjectNat, EmbedNat, module RSNat" =
   print_string (expand_impl {|
-    type nat = Zero | Succ of nat [@@deriving base_functor]
+    type nat = Zero | Succ of nat [@@deriving recursion_schemes]
   |});
   [%expect {|
-    type nat = Zero | Succ of nat [@@deriving base_functor]
+    type nat = Zero | Succ of nat [@@deriving recursion_schemes]
     include struct
       module BaseNat = struct
         type 'a t = Zero | Succ of 'a
@@ -59,6 +59,6 @@ let%expect_test "type nat = Zero | Succ of nat: generates BaseNat, ProjectNat, E
 
 let%expect_test "non-recursive type raises error" =
   print_string (expand_impl {|
-    type t = A | B of int [@@deriving base_functor]
+    type t = A | B of int [@@deriving recursion_schemes]
   |});
   [%expect {| |}]
