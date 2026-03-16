@@ -1,5 +1,38 @@
 (library
  (name base_functor_tests)
+ (modules base_functor_tests)
+ (inline_tests)
+ (libraries ppxlib compiler-libs.common ppx_expect base_functor)
+ (preprocess
+  (pps ppx_expect)))
+
+(library
+ (name nat_tests)
+ (modules nat_test)
+ (inline_tests)
+ (libraries ppxlib compiler-libs.common ppx_expect base_functor)
+ (preprocess
+  (pps ppx_expect)))
+
+(library
+ (name cons_params012_tests)
+ (modules cons_params012_test)
+ (inline_tests)
+ (libraries ppxlib compiler-libs.common ppx_expect base_functor)
+ (preprocess
+  (pps ppx_expect)))
+
+(library
+ (name list_tests)
+ (modules list_test)
+ (inline_tests)
+ (libraries ppxlib compiler-libs.common ppx_expect base_functor)
+ (preprocess
+  (pps ppx_expect)))
+
+(library
+ (name tree_tests)
+ (modules tree_test)
  (inline_tests)
  (libraries ppxlib compiler-libs.common ppx_expect base_functor)
  (preprocess
