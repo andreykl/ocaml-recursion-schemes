@@ -1,4 +1,4 @@
-(*
+(**
   expand.ml — PPX expansion inspector
 
   This executable is a small debugging tool for PPX/ppxlib-based projects.
@@ -13,26 +13,35 @@
      that registers your deriver (i.e. executes Deriving.add at startup; e.g. we add
      base_functor to the libraries stanza in the dune file).
   4) Prints the result for the selected AST stage and output view:
-     - --stage raw|expanded
+     - --stage raw|exp
          raw      : prints the parsed input AST (before running any PPX)
-         expanded : prints the AST after running ppxlib's driver (Driver.map_structure)
-     - --view tree|source
+         exp : prints the AST after running ppxlib's driver (Driver.map_structure)
+     - --view tree|src
          tree   : prints an AST "tree" dump (like ocamlc -dparsetree). For this output we
                   convert ppxlib's selected AST representation into the compiler's current
                   Parsetree and print it via Ocaml_common.Printast.
-         source : pretty-prints the OCaml code (either before or after PPX, depending on --stage).
+         src : pretty-prints the OCaml code (either before or after PPX, depending on --stage).
 
   Usage examples:
-    dune exec ./expand.exe -- --stage expanded --view tree   path/to/file.ml
-    dune exec ./expand.exe -- --stage expanded --view source path/to/file.ml
+    dune exec ./expand.exe -- --stage exp --view tree   path/to/file.ml
+    dune exec ./expand.exe -- --stage exp --view src path/to/file.ml
     dune exec ./expand.exe -- --stage raw      --view tree   path/to/file.ml
-    echo 'type t = int [@@deriving base_functor]' \
-      | dune exec ./expand.exe -- --stage expanded --view tree
+    echo "type 'a t = X of 'a | Y of 'a t [@@deriving base_functor]" \
+      | dune exec ./expand.exe -- --stage raw --view tree
 
-  Usage examples:
-    dune exec ./expand.exe -- --mode tree   path/to/file.ml
-    dune exec ./expand.exe -- --mode source path/to/file.ml
-    echo 'type t = int [@@deriving base_functor]' | dune exec ./expand.exe -- --mode tree
+  Alternatives and related tools:
+  - ocamlc -dsource        : prints source after PPX expansion; equivalent to
+                             --stage exp --view src, but requires full compilation
+                             and does not support raw (pre-PPX) output.
+  - ocamlc -dparsetree     : dumps the AST tree after PPX expansion; equivalent to
+                             --stage exp --view tree, but again only during
+                             compilation and without raw stage.
+  - ppxlib-pp              : ships with ppxlib; applies registered transformations and
+                             prints expanded source.  Equivalent to --stage exp
+                             --view src, but has no raw stage or tree view.
+  This tool combines both views (tree/src) and both stages (raw/exp) in one
+  utility, works without full compilation, and reads from stdin.  The raw+tree
+  combination (parsed AST before any PPX) has no direct equivalent in standard tools.
 
   Notes about AST types:
   - ppxlib internally works with a "selected" AST (from the ppxlib/astlib world),
@@ -44,7 +53,9 @@
 open Ppxlib
 
 (* Convert ppxlib's selected AST into the current OCaml compiler Parsetree,
-   so we can print it with Ocaml_common.Printast (the same style as -dparsetree). *)
+   so we can print it with Ocaml_common.Printast (the same style as -dparsetree).
+   Private ppxlib API — no public equivalent as of ppxlib 0.35.
+   Needed to convert ppxlib AST → compiler-libs Parsetree for Printast. *)
 module Convert =
   Ppxlib_ast.Convert
     (Ppxlib_ast.Selected_ast)
@@ -56,16 +67,6 @@ module Convert =
 type view = Tree | Source
 type stage = Raw | Expanded
 
-(* Read the full contents of an input channel into a string. *)
-let read_all ic =
-  let buf = Buffer.create 4096 in
-  (try
-     while true do
-       Buffer.add_channel buf ic 4096
-     done
-   with End_of_file -> ());
-  Buffer.contents buf
-
 (* Main program logic:
    parse -> expand -> print *)
 let run (view : view) (stage : stage) (file : string option) =
@@ -75,8 +76,8 @@ let run (view : view) (stage : stage) (file : string option) =
         let ic = open_in fname in
         Fun.protect
           ~finally:(fun () -> close_in_noerr ic)
-          (fun () -> (fname, read_all ic))
-    | None -> ("stdin.ml", read_all stdin)
+          (fun () -> (fname, In_channel.input_all ic))
+    | None -> ("stdin.ml", In_channel.input_all stdin)
   in
 
   (* Set up locations for error messages to use [fname]. *)
@@ -84,9 +85,9 @@ let run (view : view) (stage : stage) (file : string option) =
   Location.init lexbuf fname;
 
   (* Parse and expand using the ppxlib driver. *)
-  let ast = Parse.implementation lexbuf in
   let ast =
-    match stage with Raw -> ast | Expanded -> Driver.map_structure ast
+    let parsed = Parse.implementation lexbuf in
+    match stage with Raw -> parsed | Expanded -> Driver.map_structure parsed
   in
 
   (* Print according to the chosen mode. *)
@@ -101,22 +102,22 @@ let run (view : view) (stage : stage) (file : string option) =
 
 open Cmdliner
 
-(* --view tree|source *)
+(* --view tree|src *)
 let view_term : view Term.t =
   let doc =
-    "Output view mode: tree prints Parsetree, source prints OCaml source code."
+    "Output view mode: $(b,tree) prints Parsetree, $(b,src) prints OCaml source code."
   in
-  let views = [ ("tree", Tree); ("source", Source) ] in
-  Arg.(value & opt (enum views) Tree & info [ "view" ] ~docv:"VIEW" ~doc)
+  let views = [ ("tree", Tree); ("src", Source) ] in
+  Arg.(value & opt (enum views) Source & info [ "view" ] ~docv:"tree|src" ~doc)
 
-(* --stage raw|expanded *)
+(* --stage raw|exp *)
 let stage_term : stage Term.t =
   let doc =
-    "AST stage: raw prints the parsed input AST, expanded prints the AST after \
-     PPX expansion."
+    "AST stage: $(b,raw) prints the parsed input AST, $(b,exp) prints the \
+     AST after PPX expansion."
   in
-  let stages = [ ("raw", Raw); ("expanded", Expanded) ] in
-  Arg.(value & opt (enum stages) Expanded & info [ "stage" ] ~docv:"STAGE" ~doc)
+  let stages = [ ("raw", Raw); ("exp", Expanded) ] in
+  Arg.(value & opt (enum stages) Expanded & info [ "stage" ] ~docv:"raw|exp" ~doc)
 
 (* Optional positional input file. If absent, read from stdin. *)
 let file_term : string option Term.t =
