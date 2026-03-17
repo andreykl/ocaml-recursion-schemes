@@ -11,7 +11,7 @@
      which applies all registered transformations (extensions, derivers, etc.).
      Important: this works only if the executable links in the library/module
      that registers your deriver (i.e. executes Deriving.add at startup; e.g. we add
-     base_functor to the libraries stanza in the dune file).
+     recurion_schemes.ppx to the libraries stanza in the dune file).
   4) Prints the result for the selected AST stage and output view:
      - --stage raw|exp
          raw      : prints the parsed input AST (before running any PPX)
@@ -26,7 +26,7 @@
     dune exec ./expand.exe -- --stage exp --view tree   path/to/file.ml
     dune exec ./expand.exe -- --stage exp --view src path/to/file.ml
     dune exec ./expand.exe -- --stage raw      --view tree   path/to/file.ml
-    echo "type 'a t = X of 'a | Y of 'a t [@@deriving base_functor]" \
+    echo "type 'a t = X of 'a | Y of 'a t [@@deriving recursion_schemes.ppx]" \
       | dune exec ./expand.exe -- --stage raw --view tree
 
   Alternatives and related tools:
