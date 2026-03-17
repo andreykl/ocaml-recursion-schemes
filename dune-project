@@ -7,7 +7,7 @@
  (maintainers "Klaus Andrey <aklaus.code@gmail.com>")
  (authors "Klaus Andrey <aklaus.code@gmail.com>")
  (depends
-  (ocaml (= 5.2.1))
+  (ocaml (>= 5.2.1))
   (core (>= 0.17.1))
   (ppx_deriving (>= 6.0.3))
   (ppxlib (>= 0.35.0))
