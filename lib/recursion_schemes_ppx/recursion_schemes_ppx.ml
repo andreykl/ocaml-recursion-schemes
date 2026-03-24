@@ -1,14 +1,39 @@
 module StringSet = Set.Make (String)
 open Ppxlib
 
+let letters =
+  let ca = Char.code 'a' in
+  List.init 26 (fun i -> Char.chr (ca + i))
+
+let fresh_name letters all_known_names =
+  let rec fresh letters =
+    match letters with
+    | c :: rest ->
+        let name = String.make 1 c in
+        if not (StringSet.mem name all_known_names) then
+          (name, StringSet.add name all_known_names)
+        else fresh rest
+    | [] ->
+        let rec find_with_number n =
+          let name = "a" ^ string_of_int n in
+          if not (StringSet.mem name all_known_names) then
+            (name, StringSet.add name all_known_names)
+          else find_with_number (n + 1)
+        in
+        find_with_number 0
+  in
+  fresh letters
+
 let str_type_decl ~ctxt (rec_flag, tdecls) =
   let loc_code : location = Expansion_context.Deriver.derived_item_loc ctxt in
   let loc = { loc_code with loc_ghost = true } in
+  let open Ast_builder.Make (struct
+    let loc = loc
+  end) in
   if rec_flag = Nonrecursive then
     Location.raise_errorf ~loc
-      "base_functor can be derived for recursive data types only"
+      "recursion_schemes can be derived for recursive data types only"
   else
-    let open Ast_builder.Default in
     match tdecls with
     | [
      {
@@ -67,39 +92,19 @@ let str_type_decl ~ctxt (rec_flag, tdecls) =
         in
 
         let all_names = StringSet.union param_names names_in_constructors in
-
-        let letters =
-          let ca = Char.code 'a' in
-          List.init 26 (fun i -> Char.chr (ca + i))
-        in
-        let rec fresh_name letters =
-          match letters with
-          | c :: rest ->
-              let name = String.make 1 c in
-              if not (StringSet.mem name all_names) then name
-              else fresh_name rest
-          | [] ->
-              let rec find_with_number n =
-                let name = "a" ^ string_of_int n in
-                if not (StringSet.mem name all_names) then name
-                else find_with_number (n + 1)
-              in
-              find_with_number 0
-        in
-
-        let param_name = fresh_name letters in
-
-        let map_type (ct : core_type) : core_type =
-          let ct = { ct with ptyp_loc = loc } in
-          match ct.ptyp_desc with
-          | Ptyp_constr ({ txt = Lident tname'; _ }, _) ->
-              if tname = tname' then { ct with ptyp_desc = Ptyp_var param_name }
-              else ct
-          | _ -> ct
-        in
+        let param_name, _ = fresh_name letters all_names in
 
         let map_constructor (ctor_decl : constructor_declaration) :
             constructor_declaration =
+          let map_type (ct : core_type) : core_type =
+            let ct = { ct with ptyp_loc = loc } in
+            match ct.ptyp_desc with
+            | Ptyp_constr ({ txt = Lident tname'; _ }, _) ->
+                if tname = tname' then
+                  { ct with ptyp_desc = Ptyp_var param_name }
+                else ct
+            | _ -> ct
+          in
           let args =
             match ctor_decl.pcd_args with
             | Pcstr_tuple tuples ->
@@ -132,21 +137,108 @@ let str_type_decl ~ctxt (rec_flag, tdecls) =
         in
 
         let params =
-          (ptyp_var ~loc param_name, (NoVariance, NoInjectivity)) :: params
+          (ptyp_var param_name, (NoVariance, NoInjectivity)) :: params
         in
         let ctors = List.map map_constructor ctors in
         let base_functor_decl : type_declaration =
-          type_declaration ~loc
-            ~name:(Located.mk ~loc @@ tname ^ "_bf")
-            ~params ~cstrs:[] ~kind:(Ptype_variant ctors) ~private_:Public
-            ~manifest:None
+          type_declaration ~name:(Located.mk tname) ~params ~cstrs:[]
+            ~kind:(Ptype_variant ctors) ~private_:Public ~manifest:None
         in
-        [ pstr_type ~loc Nonrecursive [ base_functor_decl ] ]
+        let module_expr =
+          let constructor_to_case
+              ({ pcd_name; pcd_args; _ } : constructor_declaration) : case =
+            let args_to_pat_expr (args : constructor_arguments) :
+                pattern option * expression option =
+              match args with
+              | Pcstr_tuple args ->
+                  let map_core_type_pe : core_type -> pattern * expression =
+                    function
+                    | { ptyp_desc = Ptyp_var lbl; _ } ->
+                        let pat = ppat_var @@ Located.mk lbl in
+                        let arg = pexp_ident (Located.lident lbl) in
+                        let arg =
+                          if lbl = param_name then
+                            pexp_apply
+                              (pexp_ident (Located.lident "f"))
+                              [ (Nolabel, arg) ]
+                          else arg
+                        in
+                        (pat, arg)
+                    | { ptyp_desc = Ptyp_tuple _typs; _ } ->
+                        (ppat_any, pexp_unreachable)
+                    | { ptyp_desc = Ptyp_constr (_lidnt, _args); _ } ->
+                        (ppat_any, pexp_unreachable)
+                    | _ ->
+                        (* TODO: support other types correctly *)
+                        failwith "other types are not supported (yet?)"
+                  in
+                  (* let map_core_type_p *)
+                  (*     ({ *)
+                  (*        ptyp_desc = _; *)
+                  (*        ptyp_loc = _; *)
+                  (*        ptyp_loc_stack = _; *)
+                  (*        ptyp_attributes = _; *)
+                  (*      } : *)
+                  (*       core_type) : pattern = *)
+                  (*   ppat_any *)
+                  (* in *)
+
+                  let patterns, expressions =
+                    List.split @@ List.map map_core_type_pe args
+                  in
+
+                  (*
+                  List.fold_left
+                    (fun acc typ ->
+                      StringSet.union acc @@ collect_names_in_type typ)
+                    acc args *)
+                  (ppat_tuple_opt patterns, pexp_tuple_opt expressions)
+              | Pcstr_record _labels -> (None, None)
+              (* List.fold_left *)
+              (*   (fun acc label -> *)
+              (*     StringSet.union acc *)
+              (*     @@ collect_names_in_type label.pld_type) *)
+              (*   acc labels) *)
+
+              (*              let ct = { ct with ptyp_loc = loc } in
+              match ct.ptyp_desc with
+              | Ptyp_constr ({ txt = Lident tname'; _ }, _) ->
+                 if tname = tname' then { ct with ptyp_desc = Ptyp_var param_name }
+                 else ct
+              | _ -> ct
+ *)
+            in
+            let idnt = Located.map_lident pcd_name in
+            let pato, expro = args_to_pat_expr pcd_args in
+            case ~guard:None ~lhs:(ppat_construct idnt pato)
+              ~rhs:(pexp_construct idnt expro)
+          in
+          let cases = List.map constructor_to_case ctors in
+          let exp_function =
+            pexp_function
+              [ pparam_val Nolabel None (ppat_var @@ Located.mk "f") ]
+              None
+              (Pfunction_cases (cases, loc, []))
+          in
+          let value_binding =
+            value_binding ~pat:(ppat_var @@ Located.mk "map") ~expr:exp_function
+          in
+          pmod_structure
+            [
+              pstr_type Nonrecursive [ base_functor_decl ];
+              pstr_value Nonrecursive [ value_binding ];
+            ]
+        in
+        let module_binding =
+          module_binding ~name:(Located.mk (Some "Base")) ~expr:module_expr
+        in
+        [ pstr_module module_binding ]
+    (* [ pstr_type ~loc Nonrecursive [ base_functor_decl ] ] *)
     | _ ->
         Location.raise_errorf ~loc
-          "base_functor can be derived for variant types only"
+          "recursion_schemes can be derived for variant types only"
 
 let () =
-  Deriving.add "base_functor"
+  Deriving.add "recursion_schemes"
     ~str_type_decl:(Deriving.Generator.V2.make_noarg str_type_decl)
   |> Deriving.ignore
