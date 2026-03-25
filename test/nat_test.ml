@@ -7,11 +7,15 @@ let expand_impl (src : string) : string =
   let ast' = Driver.map_structure ast in
   Format.asprintf "%a" Pprintast.structure ast'
 
-let%expect_test "type t = Zero | Succ of t: generates Base, Project, Embed, include" =
-  print_string (expand_impl {|
+let%expect_test
+    "type t = Zero | Succ of t: generates Base, Project, Embed, include" =
+  print_string
+    (expand_impl
+       {|
     type t = Zero | Succ of t [@@deriving recursion_schemes.ppx]
   |});
-  [%expect {|
+  [%expect
+    {|
     type t = Zero | Succ of t [@@deriving recursion_schemes.ppx]
     include struct
       module Base = struct
@@ -32,11 +36,16 @@ let%expect_test "type t = Zero | Succ of t: generates Base, Project, Embed, incl
     end
   |}]
 
-let%expect_test "type nat = Zero | Succ of nat: generates BaseNat, ProjectNat, EmbedNat, module RSNat" =
-  print_string (expand_impl {|
+let%expect_test
+    "type nat = Zero | Succ of nat: generates BaseNat, ProjectNat, EmbedNat, \
+     module RSNat" =
+  print_string
+    (expand_impl
+       {|
     type nat = Zero | Succ of nat [@@deriving recursion_schemes.ppx]
   |});
-  [%expect {|
+  [%expect
+    {|
     type nat = Zero | Succ of nat [@@deriving recursion_schemes.ppx]
     include struct
       module BaseNat = struct
@@ -58,7 +67,9 @@ let%expect_test "type nat = Zero | Succ of nat: generates BaseNat, ProjectNat, E
   |}]
 
 let%expect_test "non-recursive type raises error" =
-  print_string (expand_impl {|
+  print_string
+    (expand_impl
+       {|
     type t = A | B of int [@@deriving recursion_schemes.ppx]
   |});
   [%expect {| |}]

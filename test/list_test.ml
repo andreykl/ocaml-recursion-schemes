@@ -7,11 +7,15 @@ let expand_impl (src : string) : string =
   let ast' = Driver.map_structure ast in
   Format.asprintf "%a" Pprintast.structure ast'
 
-let%expect_test "type 'a t = Nil | Cons of 'a * 'a t: generates MakeRS functor" =
-  print_string (expand_impl {|
+let%expect_test "type 'a t = Nil | Cons of 'a * 'a t: generates MakeRS functor"
+    =
+  print_string
+    (expand_impl
+       {|
     type 'a t = Nil | Cons of 'a * 'a t [@@deriving recursion_schemes.ppx]
   |});
-  [%expect {|
+  [%expect
+    {|
     type 'a t = Nil | Cons of 'a * 'a t [@@deriving recursion_schemes.ppx]
     include struct
       module MakeRS (Elem : sig type a end) = struct
@@ -40,11 +44,16 @@ let%expect_test "type 'a t = Nil | Cons of 'a * 'a t: generates MakeRS functor" 
     end
   |}]
 
-let%expect_test "type 'a mylist = Nil | Cons of 'a * 'a mylist: generates MakeRSMylist functor" =
-  print_string (expand_impl {|
+let%expect_test
+    "type 'a mylist = Nil | Cons of 'a * 'a mylist: generates MakeRSMylist \
+     functor" =
+  print_string
+    (expand_impl
+       {|
     type 'a mylist = Nil | Cons of 'a * 'a mylist [@@deriving recursion_schemes.ppx]
   |});
-  [%expect {|
+  [%expect
+    {|
     type 'a mylist = Nil | Cons of 'a * 'a mylist [@@deriving recursion_schemes.ppx]
     include struct
       module MakeRSMylist (Elem : sig type a end) = struct

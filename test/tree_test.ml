@@ -7,14 +7,19 @@ let expand_impl (src : string) : string =
   let ast' = Driver.map_structure ast in
   Format.asprintf "%a" Pprintast.structure ast'
 
-let%expect_test "type ('k,'v) t = Leaf | Node of ('k,'v) t * 'k * 'v * ('k,'v) t: generates MakeRS functor" =
-  print_string (expand_impl {|
+let%expect_test
+    "type ('k,'v) t = Leaf | Node of ('k,'v) t * 'k * 'v * ('k,'v) t: \
+     generates MakeRS functor" =
+  print_string
+    (expand_impl
+       {|
     type ('k, 'v) t =
       | Leaf
       | Node of ('k, 'v) t * 'k * 'v * ('k, 'v) t
     [@@deriving recursion_schemes.ppx]
   |});
-  [%expect {|
+  [%expect
+    {|
     type ('k, 'v) t = Leaf | Node of ('k, 'v) t * 'k * 'v * ('k, 'v) t
     [@@deriving recursion_schemes.ppx]
     include struct
@@ -44,14 +49,19 @@ let%expect_test "type ('k,'v) t = Leaf | Node of ('k,'v) t * 'k * 'v * ('k,'v) t
     end
   |}]
 
-let%expect_test "type ('k,'v) tree = Leaf | Node of ('k,'v) tree * 'k * 'v * ('k,'v) tree: generates MakeRSTree functor" =
-  print_string (expand_impl {|
+let%expect_test
+    "type ('k,'v) tree = Leaf | Node of ('k,'v) tree * 'k * 'v * ('k,'v) tree: \
+     generates MakeRSTree functor" =
+  print_string
+    (expand_impl
+       {|
     type ('k, 'v) tree =
       | Leaf
       | Node of ('k, 'v) tree * 'k * 'v * ('k, 'v) tree
     [@@deriving recursion_schemes.ppx]
   |});
-  [%expect {|
+  [%expect
+    {|
     type ('k, 'v) tree = Leaf | Node of ('k, 'v) tree * 'k * 'v * ('k, 'v) tree
     [@@deriving recursion_schemes.ppx]
     include struct
