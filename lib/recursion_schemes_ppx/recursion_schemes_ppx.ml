@@ -135,7 +135,6 @@ let str_type_decl ~ctxt (rec_flag, tdecls) =
             pcd_loc = loc;
           }
         in
-
         let params =
           (ptyp_var param_name, (NoVariance, NoInjectivity)) :: params
         in
@@ -144,69 +143,50 @@ let str_type_decl ~ctxt (rec_flag, tdecls) =
           type_declaration ~name:(Located.mk tname) ~params ~cstrs:[]
             ~kind:(Ptype_variant ctors) ~private_:Public ~manifest:None
         in
-        let module_expr =
+        let base_module =
+          (* let module_expr = *)
           let constructor_to_case
               ({ pcd_name; pcd_args; _ } : constructor_declaration) : case =
             let args_to_pat_expr (args : constructor_arguments) :
                 pattern option * expression option =
               match args with
               | Pcstr_tuple args ->
-                  let map_core_type_pe : core_type -> pattern * expression =
+                  let rec map_core_type_pe : core_type -> pattern * expression =
                     function
                     | { ptyp_desc = Ptyp_var lbl; _ } ->
                         let pat = ppat_var @@ Located.mk lbl in
-                        let arg = pexp_ident (Located.lident lbl) in
                         let arg =
+                          let ident = pexp_ident (Located.lident lbl) in
                           if lbl = param_name then
                             pexp_apply
                               (pexp_ident (Located.lident "f"))
-                              [ (Nolabel, arg) ]
-                          else arg
+                              [ (Nolabel, ident) ]
+                          else ident
                         in
                         (pat, arg)
-                    | { ptyp_desc = Ptyp_tuple _typs; _ } ->
-                        (ppat_any, pexp_unreachable)
-                    | { ptyp_desc = Ptyp_constr (_lidnt, _args); _ } ->
-                        (ppat_any, pexp_unreachable)
+                    | { ptyp_desc = Ptyp_tuple typs; _ } ->
+                        let patterns, expressions =
+                          List.split @@ List.map map_core_type_pe typs
+                        in
+                        (ppat_tuple patterns, pexp_tuple expressions)
+                    | { ptyp_desc = Ptyp_constr (lidnt, args); _ } ->
+                        let patterns, expressions =
+                          List.split @@ List.map map_core_type_pe args
+                        in
+                        ( ppat_construct lidnt @@ ppat_tuple_opt patterns,
+                          pexp_construct lidnt @@ pexp_tuple_opt expressions )
                     | _ ->
-                        (* TODO: support other types correctly *)
-                        failwith "other types are not supported (yet?)"
+                        (* TODO: support other types correctly? *)
+                        ( ppat_var @@ Located.mk "x",
+                          pexp_ident @@ Located.lident "x" )
                   in
-                  (* let map_core_type_p *)
-                  (*     ({ *)
-                  (*        ptyp_desc = _; *)
-                  (*        ptyp_loc = _; *)
-                  (*        ptyp_loc_stack = _; *)
-                  (*        ptyp_attributes = _; *)
-                  (*      } : *)
-                  (*       core_type) : pattern = *)
-                  (*   ppat_any *)
-                  (* in *)
-
                   let patterns, expressions =
                     List.split @@ List.map map_core_type_pe args
                   in
-
-                  (*
-                  List.fold_left
-                    (fun acc typ ->
-                      StringSet.union acc @@ collect_names_in_type typ)
-                    acc args *)
                   (ppat_tuple_opt patterns, pexp_tuple_opt expressions)
-              | Pcstr_record _labels -> (None, None)
-              (* List.fold_left *)
-              (*   (fun acc label -> *)
-              (*     StringSet.union acc *)
-              (*     @@ collect_names_in_type label.pld_type) *)
-              (*   acc labels) *)
-
-              (*              let ct = { ct with ptyp_loc = loc } in
-              match ct.ptyp_desc with
-              | Ptyp_constr ({ txt = Lident tname'; _ }, _) ->
-                 if tname = tname' then { ct with ptyp_desc = Ptyp_var param_name }
-                 else ct
-              | _ -> ct
- *)
+              | Pcstr_record _labels ->
+                  (* TODO: support records *)
+                  (None, None)
             in
             let idnt = Located.map_lident pcd_name in
             let pato, expro = args_to_pat_expr pcd_args in
@@ -214,26 +194,150 @@ let str_type_decl ~ctxt (rec_flag, tdecls) =
               ~rhs:(pexp_construct idnt expro)
           in
           let cases = List.map constructor_to_case ctors in
-          let exp_function =
+          let map_function =
             pexp_function
               [ pparam_val Nolabel None (ppat_var @@ Located.mk "f") ]
               None
               (Pfunction_cases (cases, loc, []))
           in
-          let value_binding =
-            value_binding ~pat:(ppat_var @@ Located.mk "map") ~expr:exp_function
+          [%str
+            module Base = struct
+              [%%i pstr_type Nonrecursive [ base_functor_decl ]]
+
+              let map = [%e map_function]
+            end]
+        in
+        let project_module =
+          let constructor_to_case
+              ({ pcd_name; pcd_args; _ } : constructor_declaration) : case =
+            let args_to_pat_expr (args : constructor_arguments) :
+                pattern option * expression option =
+              match args with
+              | Pcstr_tuple args ->
+                  let rec map_core_type_pe : core_type -> pattern * expression =
+                    function
+                    | { ptyp_desc = Ptyp_var lbl; _ } ->
+                        let pat = ppat_var @@ Located.mk lbl in
+                        let arg = pexp_ident @@ Located.lident lbl in
+                        (pat, arg)
+                    | { ptyp_desc = Ptyp_tuple typs; _ } ->
+                        let patterns, expressions =
+                          List.split @@ List.map map_core_type_pe typs
+                        in
+                        (ppat_tuple patterns, pexp_tuple expressions)
+                    | { ptyp_desc = Ptyp_constr (lidnt, args); _ } ->
+                        let patterns, expressions =
+                          List.split @@ List.map map_core_type_pe args
+                        in
+                        ( ppat_construct lidnt @@ ppat_tuple_opt patterns,
+                          pexp_construct lidnt @@ pexp_tuple_opt expressions )
+                    | _ ->
+                        (* TODO: support other types correctly? *)
+                        ( ppat_var @@ Located.mk "x",
+                          pexp_ident @@ Located.lident "x" )
+                  in
+                  let patterns, expressions =
+                    List.split @@ List.map map_core_type_pe args
+                  in
+                  (ppat_tuple_opt patterns, pexp_tuple_opt expressions)
+              | Pcstr_record _labels ->
+                  (* TODO: support records *)
+                  (None, None)
+            in
+            let idntp = Located.map_lident pcd_name in
+            let idnte =
+              Located.map_lident @@ Located.map (fun l -> "Base." ^ l) pcd_name
+            in
+            let pato, expro = args_to_pat_expr pcd_args in
+            case ~guard:None
+              ~lhs:(ppat_construct idntp pato)
+              ~rhs:(pexp_construct idnte expro)
           in
-          pmod_structure
-            [
-              pstr_type Nonrecursive [ base_functor_decl ];
-              pstr_value Nonrecursive [ value_binding ];
-            ]
+          let cases = List.map constructor_to_case ctors in
+          let project_fun =
+            pexp_function [] None (Pfunction_cases (cases, loc, []))
+          in
+          let t_decl =
+            type_declaration ~name:(Located.mk "t") ~params:[] ~cstrs:[]
+              ~private_:Public
+              ~manifest:(Some (ptyp_constr (Located.lident tname) []))
+              ~kind:Ptype_abstract
+          in
+          [%str
+            module Project = struct
+              module Base = [%m pmod_ident @@ Located.lident "Base"]
+
+              [%%i pstr_type Nonrecursive [ t_decl ]]
+
+              let project = [%e project_fun]
+            end]
         in
-        let module_binding =
-          module_binding ~name:(Located.mk (Some "Base")) ~expr:module_expr
+        let embed_module =
+          let constructor_to_case
+              ({ pcd_name; pcd_args; _ } : constructor_declaration) : case =
+            let args_to_pat_expr (args : constructor_arguments) :
+                pattern option * expression option =
+              match args with
+              | Pcstr_tuple args ->
+                  let rec map_core_type_pe : core_type -> pattern * expression =
+                    function
+                    | { ptyp_desc = Ptyp_var lbl; _ } ->
+                        let pat = ppat_var @@ Located.mk lbl in
+                        let arg = pexp_ident @@ Located.lident lbl in
+                        (pat, arg)
+                    | { ptyp_desc = Ptyp_tuple typs; _ } ->
+                        let patterns, expressions =
+                          List.split @@ List.map map_core_type_pe typs
+                        in
+                        (ppat_tuple patterns, pexp_tuple expressions)
+                    | { ptyp_desc = Ptyp_constr (lidnt, args); _ } ->
+                        let patterns, expressions =
+                          List.split @@ List.map map_core_type_pe args
+                        in
+                        ( ppat_construct lidnt @@ ppat_tuple_opt patterns,
+                          pexp_construct lidnt @@ pexp_tuple_opt expressions )
+                    | _ ->
+                        (* TODO: support other types correctly? *)
+                        ( ppat_var @@ Located.mk "x",
+                          pexp_ident @@ Located.lident "x" )
+                  in
+                  let patterns, expressions =
+                    List.split @@ List.map map_core_type_pe args
+                  in
+                  (ppat_tuple_opt patterns, pexp_tuple_opt expressions)
+              | Pcstr_record _labels ->
+                  (* TODO: support records *)
+                  (None, None)
+            in
+            let idntp =
+              Located.map_lident @@ Located.map (fun l -> "Base." ^ l) pcd_name
+            in
+            let idnte = Located.map_lident pcd_name in
+            let pato, expro = args_to_pat_expr pcd_args in
+            case ~guard:None
+              ~lhs:(ppat_construct idntp pato)
+              ~rhs:(pexp_construct idnte expro)
+          in
+          let cases = List.map constructor_to_case ctors in
+          let project_fun =
+            pexp_function [] None (Pfunction_cases (cases, loc, []))
+          in
+          let t_decl =
+            type_declaration ~name:(Located.mk "t") ~params:[] ~cstrs:[]
+              ~private_:Public
+              ~manifest:(Some (ptyp_constr (Located.lident tname) []))
+              ~kind:Ptype_abstract
+          in
+          [%str
+            module Embed = struct
+              module Base = [%m pmod_ident @@ Located.lident "Base"]
+
+              [%%i pstr_type Nonrecursive [ t_decl ]]
+
+              let embed = [%e project_fun]
+            end]
         in
-        [ pstr_module module_binding ]
-    (* [ pstr_type ~loc Nonrecursive [ base_functor_decl ] ] *)
+        base_module @ project_module @ embed_module
     | _ ->
         Location.raise_errorf ~loc
           "recursion_schemes can be derived for variant types only"
