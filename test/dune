@@ -37,3 +37,11 @@
  (libraries ppxlib compiler-libs.common ppx_expect recursion_schemes.ppx)
  (preprocess
   (pps ppx_expect)))
+
+(library
+ (name map_core_type_pe_tests)
+ (modules map_core_type_pe_test)
+ (inline_tests)
+ (libraries ppxlib compiler-libs.common ppx_expect recursion_schemes.ppx)
+ (preprocess
+  (pps ppx_expect)))

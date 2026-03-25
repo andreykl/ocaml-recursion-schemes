@@ -7,11 +7,16 @@ let expand_impl (src : string) : string =
   let ast' = Driver.map_structure ast in
   Format.asprintf "%a" Pprintast.structure ast'
 
-let%expect_test "type t = Lit of int | Add of t * t | Neg of t: map applies f to recursive positions" =
-  print_string (expand_impl {|
+let%expect_test
+    "type t = Lit of int | Add of t * t | Neg of t: map applies f to recursive \
+     positions" =
+  print_string
+    (expand_impl
+       {|
     type t = Lit of int | Add of t * t | Neg of t [@@deriving recursion_schemes.ppx]
   |});
-  [%expect {|
+  [%expect
+    {|
     type t = Lit of int | Add of t * t | Neg of t [@@deriving recursion_schemes.ppx]
     include struct
       module Base = struct
