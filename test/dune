@@ -7,8 +7,16 @@
   (pps ppx_expect)))
 
 (library
- (name nat_tests)
- (modules nat_test)
+ (name nat_nat_tests)
+ (modules nat_nat_test)
+ (inline_tests)
+ (libraries ppxlib compiler-libs.common ppx_expect recursion_schemes.ppx)
+ (preprocess
+  (pps ppx_expect)))
+
+(library
+ (name nat_t_tests)
+ (modules nat_t_test)
  (inline_tests)
  (libraries ppxlib compiler-libs.common ppx_expect recursion_schemes.ppx)
  (preprocess
