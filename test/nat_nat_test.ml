@@ -17,22 +17,38 @@ let%expect_test
   |});
   [%expect
     {|
-    type nat = Zero | Succ of nat [@@deriving recursion_schemes]
-    include struct
-      module BaseNat = struct
-        type 'a t = Zero | Succ of 'a
-        let map f = function Zero -> Zero | Succ a -> Succ (f a)
-      end
-      module ProjectNat = struct
-        module Base = BaseNat
-        type t = nat
-        let project = function Zero -> BaseNat.Zero | Succ a -> BaseNat.Succ a
-      end
-      module EmbedNat = struct
-        module Base = BaseNat
-        type t = nat
-        let embed = function BaseNat.Zero -> Zero | BaseNat.Succ a -> Succ a
-      end
-      module RSNat = Recursion_schemes.Make (BaseNat) (ProjectNat) (EmbedNat)
-    end
-  |}]
+    type nat =
+      | Zero
+      | Succ of nat [@@deriving recursion_schemes]
+    include
+      struct
+        [@@@ocaml.warning "-60"]
+        let _ = fun (_ : nat) -> ()
+        module BaseNat =
+          struct
+            type nonrec 'a t =
+              | Zero
+              | Succ of 'a
+            let map f = function | Zero -> Zero | Succ a -> Succ (f a)
+            let _ = map
+          end
+        module ProjectNat =
+          struct
+            module Base = BaseNat
+            type nonrec t = nat
+            let project =
+              function | Zero -> BaseNat.Zero | Succ a -> BaseNat.Succ a
+            let _ = project
+          end
+        module EmbedNat =
+          struct
+            module Base = BaseNat
+            type nonrec t = nat
+            let embed =
+              function | BaseNat.Zero -> Zero | BaseNat.Succ a -> Succ a
+            let _ = embed
+          end
+        module RSNat =
+          (((Recursion_schemes.Make)(BaseNat))(ProjectNat))(EmbedNat)
+      end[@@ocaml.doc "@inline"][@@merlin.hide ]
+    |}]

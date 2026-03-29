@@ -11,6 +11,6 @@ let%expect_test "non-recursive type raises error" =
   print_string
     (expand_impl
        {|
-    type t = A | B of int [@@deriving recursion_schemes.ppx]
+    type t = A | B of int [@@deriving recursion_schemes]
   |});
   [%expect {| |}]
