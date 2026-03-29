@@ -2,6 +2,6 @@
  (name recursion_schemes_ppx)
  (public_name recursion_schemes.ppx)
  (kind ppx_deriver)
- (libraries ppxlib)
+ (libraries ppxlib monad)
  (preprocess
   (pps ppxlib.metaquot)))
