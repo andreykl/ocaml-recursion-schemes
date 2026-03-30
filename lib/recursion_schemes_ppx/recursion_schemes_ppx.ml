@@ -3,7 +3,7 @@ open Ppxlib
 
 let letters =
   let ca = Char.code 'a' in
-  List.init 26 (fun i -> Char.chr (ca + i))
+  List.init 26 (fun i -> Char.chr @@ ca + i)
 
 let fresh_name letters all_known_names =
   let rec fresh letters =
@@ -153,7 +153,7 @@ let str_type_decl ~ctxt (rec_flag, tdecls) =
             (fun acc (param, _) ->
               match param with
               | { ptyp_desc = Ptyp_var name; _ } -> StringSet.add name acc
-              | _ -> acc)
+              | _ -> (* type parameters are always variables *) acc)
             StringSet.empty params
         in
 
@@ -183,11 +183,17 @@ let str_type_decl ~ctxt (rec_flag, tdecls) =
           let map_type (ct : core_type) : core_type =
             let ct = { ct with ptyp_loc = loc } in
             match ct.ptyp_desc with
+            | Ptyp_var name when StringSet.mem name param_names ->
+               ptyp_constr (Located.lident @@ elem_sig ^ "." ^ name) []
+            | Ptyp_var _ -> ct (* should not happen since all names are in param_names *)
             | Ptyp_constr ({ txt = Lident tname'; _ }, _) ->
-                if param_name = tname' then
-                  ptyp_var tname
-                else
-                  { ct with ptyp_desc = Ptyp_constr ({ txt = Ldot (Lident elem_sig, tname'); loc }, []) }
+               if tname = tname' then
+                  { ct with ptyp_desc = Ptyp_var param_name }
+               else
+                 ct
+(*
+                 { ct with ptyp_desc = Ptyp_constr ({ txt = Ldot (Lident elem_sig, tname'); loc }, []) }
+ *)
             | _ -> ct
           in
           let args =
