@@ -16,12 +16,12 @@ let%expect_test
     type ('k, 'v) t =
       | Leaf
       | Node of ('k, 'v) t * 'k * 'v * ('k, 'v) t
-    [@@deriving recursion_schemes.ppx]
+    [@@deriving recursion_schemes]
   |});
   [%expect
     {|
     type ('k, 'v) t = Leaf | Node of ('k, 'v) t * 'k * 'v * ('k, 'v) t
-    [@@deriving recursion_schemes.ppx]
+    [@@deriving recursion_schemes]
     include struct
       module MakeRS (Elem : sig type k type v end) = struct
         module Base = struct
@@ -58,12 +58,12 @@ let%expect_test
     type ('k, 'v) tree =
       | Leaf
       | Node of ('k, 'v) tree * 'k * 'v * ('k, 'v) tree
-    [@@deriving recursion_schemes.ppx]
+    [@@deriving recursion_schemes]
   |});
   [%expect
     {|
     type ('k, 'v) tree = Leaf | Node of ('k, 'v) tree * 'k * 'v * ('k, 'v) tree
-    [@@deriving recursion_schemes.ppx]
+    [@@deriving recursion_schemes]
     include struct
       module MakeRSTree (Elem : sig type k type v end) = struct
         module Base = struct

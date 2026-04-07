@@ -13,34 +13,45 @@ let%expect_test
   print_string
     (expand_impl
        {|
-    type 'a mylist = Nil | Cons of 'a * 'a mylist [@@deriving recursion_schemes.ppx]
+    type 'a mylist = Nil | Cons of 'a * 'a mylist [@@deriving recursion_schemes]
   |});
   [%expect
     {|
-    type 'a mylist = Nil | Cons of 'a * 'a mylist [@@deriving recursion_schemes.ppx]
-    include struct
-      module MakeRSMylist (Elem : sig type a end) = struct
-        module Base = struct
-          type 'b t = Nil | Cons of Elem.a * 'b
-          let map f = function
-            | Nil -> Nil
-            | Cons (e, tl) -> Cons (e, f tl)
-        end
-        module Project = struct
-          module Base = Base
-          type t = Elem.a mylist
-          let project = function
-            | Nil -> Base.Nil
-            | Cons (x, xs) -> Base.Cons (x, xs)
-        end
-        module Embed = struct
-          module Base = Base
-          type t = Elem.a mylist
-          let embed = function
-            | Base.Nil -> Nil
-            | Base.Cons (x, xs) -> Cons (x, xs)
-        end
-        include Recursion_schemes.Make (Base) (Project) (Embed)
-      end
-    end
-  |}]
+    type 'a mylist =
+      | Nil
+      | Cons of 'a * 'a mylist [@@deriving recursion_schemes]
+    include
+      struct
+        [@@@ocaml.warning "-60"]
+        let _ = fun (_ : 'a mylist) -> ()
+        module Make_RSMylist(Elem:sig type nonrec a end) =
+          struct
+            module Base =
+              struct
+                type nonrec 'b t =
+                  | Nil
+                  | Cons of Elem.a * 'b
+                let map f =
+                  function | Nil -> Nil | Cons (a, b) -> Cons (a, (f b))
+                let _ = map
+              end
+            module Project =
+              struct
+                module Base = Base
+                type nonrec t = Elem.a mylist
+                let project =
+                  function | Nil -> Base.Nil | Cons (a, b) -> Base.Cons (a, b)
+                let _ = project
+              end
+            module Embed =
+              struct
+                module Base = Base
+                type nonrec t = Elem.a mylist
+                let embed =
+                  function | Base.Nil -> Nil | Base.Cons (a, b) -> Cons (a, b)
+                let _ = embed
+              end
+            include (((Recursion_schemes.Make)(Base))(Project))(Embed)
+          end
+      end[@@ocaml.doc "@inline"][@@merlin.hide ]
+    |}]

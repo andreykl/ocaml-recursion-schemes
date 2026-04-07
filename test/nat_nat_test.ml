@@ -24,31 +24,32 @@ let%expect_test
       struct
         [@@@ocaml.warning "-60"]
         let _ = fun (_ : nat) -> ()
-        module BaseNat =
-          struct
-            type nonrec 'a t =
-              | Zero
-              | Succ of 'a
-            let map f = function | Zero -> Zero | Succ a -> Succ (f a)
-            let _ = map
-          end
-        module ProjectNat =
-          struct
-            module Base = BaseNat
-            type nonrec t = nat
-            let project =
-              function | Zero -> BaseNat.Zero | Succ a -> BaseNat.Succ a
-            let _ = project
-          end
-        module EmbedNat =
-          struct
-            module Base = BaseNat
-            type nonrec t = nat
-            let embed =
-              function | BaseNat.Zero -> Zero | BaseNat.Succ a -> Succ a
-            let _ = embed
-          end
         module RSNat =
-          (((Recursion_schemes.Make)(BaseNat))(ProjectNat))(EmbedNat)
+          struct
+            module Base =
+              struct
+                type nonrec 'a t =
+                  | Zero
+                  | Succ of 'a
+                let map f = function | Zero -> Zero | Succ a -> Succ (f a)
+                let _ = map
+              end
+            module Project =
+              struct
+                module Base = Base
+                type nonrec t = nat
+                let project =
+                  function | Zero -> Base.Zero | Succ a -> Base.Succ a
+                let _ = project
+              end
+            module Embed =
+              struct
+                module Base = Base
+                type nonrec t = nat
+                let embed = function | Base.Zero -> Zero | Base.Succ a -> Succ a
+                let _ = embed
+              end
+            include (((Recursion_schemes.Make)(Base))(Project))(Embed)
+          end
       end[@@ocaml.doc "@inline"][@@merlin.hide ]
     |}]

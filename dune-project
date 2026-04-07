@@ -12,5 +12,6 @@
   (ppx_deriving (>= 6.0.3))
   (ppxlib (>= 0.35.0))
   (ppx_expect :with-test)
+  (utop :with-test)
   (alcotest :with-test)))
 (generate_opam_files true)
