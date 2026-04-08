@@ -6,15 +6,14 @@ end)
 
 open Ppxlib
 
-let ( proj_fun,
-      emb_fun,
-      proj_mod,
-      emb_mod,
-      base_mod,
-      std_typ_name,
-      rs_mod,
-      elem_sig ) =
-  ("project", "embed", "Project", "Embed", "Base", "t", "RS", "Elem")
+let proj_fun = "project"
+let emb_fun = "embed"
+let proj_mod = "Project"
+let emb_mod = "Embed"
+let base_mod = "Base"
+let std_typ_name = "t"
+let rs_mod = "RS"
+let elem_sig = "Elem"
 
 let elem_tname ~loc name =
   Ast_builder.Default.Located.lident ~loc @@ elem_sig ^ "." ^ name
@@ -106,7 +105,8 @@ let build_case ~loc ({ pcd_name; pcd_args; _ } : constructor_declaration)
         (ppat_tuple_opt patterns, pexp_tuple_opt expressions)
     | Pcstr_record _labels ->
         (* TODO: support records *)
-        (None, None)
+        Location.raise_errorf ~loc
+          "recursion_schemes: inline record constructors are not yet supported"
   in
   case ~guard:None
     ~lhs:(ppat_construct pat_idnt pato)
@@ -176,7 +176,9 @@ let map_constructor ~param_name ~param_names ~tname ~loc
     | Ptyp_tuple typs ->
         let typs = List.map (map_type ~nested) typs in
         { ct with ptyp_desc = Ptyp_tuple typs }
-    | _ -> ct
+    | _ ->
+       (* TODO: what with others constructors? *)
+       ct
   in
   let args =
     match ctor_decl.pcd_args with
@@ -216,7 +218,9 @@ let collect_names_in_type typ =
           List.fold_left (fun acc var -> StringSet.add var.txt acc) acc vars
         in
         collect acc typ
-    | _ -> acc
+    | _ ->
+       (* TODO: what with others constructors? *)
+       acc
   in
   collect StringSet.empty typ
 
@@ -281,7 +285,7 @@ let str_type_decl ~ctxt (rec_flag, tdecls) =
 
         let params =
           [ (ptyp_var param_name, (NoVariance, NoInjectivity)) ]
-          (* :: params all other params moved to Elem.* *)
+          (* all other params moved to Elem.* *)
         in
         let ctors =
           List.map (map_constructor ~loc ~tname ~param_name ~param_names) ctors
@@ -332,7 +336,7 @@ let str_type_decl ~ctxt (rec_flag, tdecls) =
         in
         let base_module =
           let base_functor_decl : type_declaration =
-            type_declaration ~name:(Located.mk "t") ~params ~cstrs:[]
+            type_declaration ~name:(Located.mk std_typ_name) ~params ~cstrs:[]
               ~kind:(Ptype_variant ctors) ~private_:Public ~manifest:None
           in
           let transform_var lbl ident =
@@ -358,21 +362,6 @@ let str_type_decl ~ctxt (rec_flag, tdecls) =
 
               let map = [%e map_function]
             end]
-          (*          let body =
-            pmod_structure
-              [
-                pstr_type Nonrecursive [ base_functor_decl ];
-                pstr_value Nonrecursive
-                  [
-                    value_binding
-                      ~pat:(ppat_var @@ Located.mk "map")
-                      ~expr:map_function;
-                  ];
-              ]
-          in
-          pstr_module
-            (module_binding ~name:(Located.mk @@ Some base_mod) ~expr:body)
- *)
         in
         let project_module =
           make_projection_modules ~map_pat_ident:Fun.id
