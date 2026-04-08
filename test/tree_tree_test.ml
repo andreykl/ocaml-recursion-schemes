@@ -8,58 +8,58 @@ let expand_impl (src : string) : string =
   Format.asprintf "%a" Pprintast.structure ast'
 
 let%expect_test
-    "type t = Lit of int | Add of t * t | Neg of t: map applies f to recursive \
-     positions" =
+    "type ('k,'v) tree = Leaf | Node of ('k,'v) tree * 'k * 'v * ('k,'v) tree: \
+     generates MakeRSTree functor" =
   print_string
     (expand_impl
        {|
-    type t = Lit of int | Add of t * t | Neg of t [@@deriving recursion_schemes]
+    type ('k, 'v) tree =
+      | Leaf
+      | Node of ('k, 'v) tree * 'k * 'v * ('k, 'v) tree
+    [@@deriving recursion_schemes]
   |});
   [%expect
     {|
-    type t =
-      | Lit of int
-      | Add of t * t
-      | Neg of t [@@deriving recursion_schemes]
+    type ('k, 'v) tree =
+      | Leaf
+      | Node of ('k, 'v) tree * 'k * 'v * ('k, 'v) tree [@@deriving
+                                                          recursion_schemes]
     include
       struct
         [@@@ocaml.warning "-60"]
-        let _ = fun (_ : t) -> ()
-        module RS =
+        let _ = fun (_ : ('k, 'v) tree) -> ()
+        module Make_RSTree(Elem:sig type nonrec k
+                                    and v end) =
           struct
             module Base =
               struct
                 type nonrec 'a t =
-                  | Lit of int
-                  | Add of 'a * 'a
-                  | Neg of 'a
+                  | Leaf
+                  | Node of 'a * Elem.k * Elem.v * 'a
                 let map f =
                   function
-                  | Lit a -> Lit a
-                  | Add (a, b) -> Add ((f a), (f b))
-                  | Neg a -> Neg (f a)
+                  | Leaf -> Leaf
+                  | Node (a, b, c, d) -> Node ((f a), b, c, (f d))
                 let _ = map
               end
             module Project =
               struct
                 module Base = Base
-                type nonrec t = t
+                type nonrec t = (Elem.k, Elem.v) tree
                 let project =
                   function
-                  | Lit a -> Base.Lit a
-                  | Add (a, b) -> Base.Add (a, b)
-                  | Neg a -> Base.Neg a
+                  | Leaf -> Base.Leaf
+                  | Node (a, b, c, d) -> Base.Node (a, b, c, d)
                 let _ = project
               end
             module Embed =
               struct
                 module Base = Base
-                type nonrec t = t
+                type nonrec t = (Elem.k, Elem.v) tree
                 let embed =
                   function
-                  | Base.Lit a -> Lit a
-                  | Base.Add (a, b) -> Add (a, b)
-                  | Base.Neg a -> Neg a
+                  | Base.Leaf -> Leaf
+                  | Base.Node (a, b, c, d) -> Node (a, b, c, d)
                 let _ = embed
               end
             include (((Recursion_schemes.Make)(Base))(Project))(Embed)

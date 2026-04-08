@@ -6,6 +6,19 @@ end)
 
 open Ppxlib
 
+let ( proj_fun,
+      emb_fun,
+      proj_mod,
+      emb_mod,
+      base_mod,
+      std_typ_name,
+      rs_mod,
+      elem_sig ) =
+  ("project", "embed", "Project", "Embed", "Base", "t", "RS", "Elem")
+
+let elem_tname ~loc name =
+  Ast_builder.Default.Located.lident ~loc @@ elem_sig ^ "." ^ name
+
 let letters =
   let ca = Char.code 'a' in
   List.init 26 (fun i -> Char.chr @@ (ca + i))
@@ -47,8 +60,9 @@ let build_case ~loc ({ pcd_name; pcd_args; _ } : constructor_declaration)
 
   let rec process_type : core_type -> (pattern * expression) State.t = function
     | { ptyp_desc = Ptyp_var lbl; _ } ->
-        let pat = ppat_var @@ Located.mk lbl in
-        let ident = pexp_ident @@ Located.lident lbl in
+        let* name = fresh in
+        let pat = ppat_var @@ Located.mk name in
+        let ident = pexp_ident @@ Located.lident name in
         let arg = transform_var lbl ident in
         return (pat, arg)
     | { ptyp_desc = Ptyp_tuple typs; _ } ->
@@ -98,8 +112,9 @@ let build_case ~loc ({ pcd_name; pcd_args; _ } : constructor_declaration)
     ~lhs:(ppat_construct pat_idnt pato)
     ~rhs:(pexp_construct exp_idnt expro)
 
-let map_constructor ~elem_sig ~param_name ~param_names ~tname ~loc
+let map_constructor ~param_name ~param_names ~tname ~loc
     (ctor_decl : constructor_declaration) : constructor_declaration =
+  let elem_tname = elem_tname ~loc in
   let open Ast_builder.Make (struct
     let loc = loc
   end) in
@@ -139,7 +154,7 @@ let map_constructor ~elem_sig ~param_name ~param_names ~tname ~loc
     let ct = { ct with ptyp_loc = loc } in
     match ct.ptyp_desc with
     | Ptyp_var name when StringSet.mem name param_names ->
-        ptyp_constr (Located.lident @@ elem_sig ^ "." ^ name) []
+        ptyp_constr (elem_tname name) []
     | Ptyp_var _ ->
         ct (* should not happen since all names are in param_names *)
     | Ptyp_constr ({ txt = Lident tname'; _ }, args) when tname = tname' ->
@@ -208,6 +223,7 @@ let collect_names_in_type typ =
 let str_type_decl ~ctxt (rec_flag, tdecls) =
   let loc_code : location = Expansion_context.Deriver.derived_item_loc ctxt in
   let loc = { loc_code with loc_ghost = true } in
+  let elem_tname = elem_tname ~loc in
   let open Ast_builder.Make (struct
     let loc = loc
   end) in
@@ -224,16 +240,6 @@ let str_type_decl ~ctxt (rec_flag, tdecls) =
        _;
      };
     ] ->
-        let ( proj_fun,
-              emb_fun,
-              proj_mod,
-              emb_mod,
-              base_mod,
-              std_typ_name,
-              rs_mod,
-              elem_sig ) =
-          ("project", "embed", "Project", "Embed", "Base", "t", "RS", "Elem")
-        in
         let rs_mod =
           if tname = std_typ_name then rs_mod
           else rs_mod ^ String.capitalize_ascii tname
@@ -278,9 +284,7 @@ let str_type_decl ~ctxt (rec_flag, tdecls) =
           (* :: params all other params moved to Elem.* *)
         in
         let ctors =
-          List.map
-            (map_constructor ~elem_sig ~loc ~tname ~param_name ~param_names)
-            ctors
+          List.map (map_constructor ~loc ~tname ~param_name ~param_names) ctors
         in
         (* In Project, constructor labels are qualified in expressions (Base.Ctor);
            in Embed -- in patterns. So, map_pat_ident and map_exp_ident are swapped
@@ -296,8 +300,11 @@ let str_type_decl ~ctxt (rec_flag, tdecls) =
           let the_fun =
             pexp_function [] None (Pfunction_cases (cases, loc, []))
           in
-          let params = List.map (fun name -> ptyp_constr (Located.lident @@ elem_sig ^ "." ^ name) [])
-                         (StringSet.to_list param_names) in
+          let params =
+            List.map
+              (fun name -> ptyp_constr (elem_tname name) [])
+              (StringSet.to_list param_names)
+          in
           let t_decl =
             type_declaration ~name:(Located.mk "t") ~params:[] ~cstrs:[]
               ~private_:Public
@@ -386,16 +393,13 @@ let str_type_decl ~ctxt (rec_flag, tdecls) =
             (StringSet.to_list param_names)
         in
         let module_rs =
-          let body = 
-          pmod_structure @@
-              base_module @ [
-              project_module ;
-              embed_module  ] @
-              incl
+          let body =
+            pmod_structure @@ base_module
+            @ [ project_module; embed_module ]
+            @ incl
           in
           pstr_module
             (module_binding ~name:(Located.mk @@ Some rs_mod) ~expr:body)
-
         in
         let module_make_rs =
           pstr_module
@@ -411,7 +415,8 @@ let str_type_decl ~ctxt (rec_flag, tdecls) =
                     @ [ project_module; embed_module ]
                     @ incl)))
         in
-        if StringSet.is_empty param_names then [ module_rs ] else [ module_make_rs ]
+        if StringSet.is_empty param_names then [ module_rs ]
+        else [ module_make_rs ]
     | _ ->
         Location.raise_errorf ~loc
           "recursion_schemes can be derived for variant types only"

@@ -1,6 +1,6 @@
 (library
- (name base_functor_tests)
- (modules base_functor_tests)
+ (name rec_tests)
+ (modules rec_test)
  (inline_tests)
  (libraries ppxlib compiler-libs.common ppx_expect recursion_schemes.ppx)
  (preprocess
@@ -55,16 +55,16 @@
   (pps ppx_expect)))
 
 (library
- (name tree_tests)
- (modules tree_test)
+ (name tree_t_tests)
+ (modules tree_t_test)
  (inline_tests)
  (libraries ppxlib compiler-libs.common ppx_expect recursion_schemes.ppx)
  (preprocess
   (pps ppx_expect)))
 
 (library
- (name map_core_type_pe_tests)
- (modules map_core_type_pe_test)
+ (name tree_tree_tests)
+ (modules tree_tree_test)
  (inline_tests)
  (libraries ppxlib compiler-libs.common ppx_expect recursion_schemes.ppx)
  (preprocess

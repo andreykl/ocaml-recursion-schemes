@@ -7,20 +7,18 @@ let expand_impl (src : string) : string =
   let ast' = Driver.map_structure ast in
   Format.asprintf "%a" Pprintast.structure ast'
 
-let%expect_test
-    "type t = Lit of int | Add of t * t | Neg of t: map applies f to recursive \
-     positions" =
+
+let%expect_test "Ptyp_tuple: tuple elements are recursively mapped" =
   print_string
     (expand_impl
        {|
-    type t = Lit of int | Add of t * t | Neg of t [@@deriving recursion_schemes]
+    type t = Leaf | Branch of (t * t) [@@deriving recursion_schemes]
   |});
   [%expect
     {|
     type t =
-      | Lit of int
-      | Add of t * t
-      | Neg of t [@@deriving recursion_schemes]
+      | Leaf
+      | Branch of (t * t) [@@deriving recursion_schemes]
     include
       struct
         [@@@ocaml.warning "-60"]
@@ -30,14 +28,12 @@ let%expect_test
             module Base =
               struct
                 type nonrec 'a t =
-                  | Lit of int
-                  | Add of 'a * 'a
-                  | Neg of 'a
+                  | Leaf
+                  | Branch of ('a * 'a)
                 let map f =
                   function
-                  | Lit a -> Lit a
-                  | Add (a, b) -> Add ((f a), (f b))
-                  | Neg a -> Neg (f a)
+                  | Leaf -> Leaf
+                  | Branch (a, b) -> Branch ((f a), (f b))
                 let _ = map
               end
             module Project =
@@ -46,9 +42,8 @@ let%expect_test
                 type nonrec t = t
                 let project =
                   function
-                  | Lit a -> Base.Lit a
-                  | Add (a, b) -> Base.Add (a, b)
-                  | Neg a -> Base.Neg a
+                  | Leaf -> Base.Leaf
+                  | Branch (a, b) -> Base.Branch (a, b)
                 let _ = project
               end
             module Embed =
@@ -57,9 +52,8 @@ let%expect_test
                 type nonrec t = t
                 let embed =
                   function
-                  | Base.Lit a -> Lit a
-                  | Base.Add (a, b) -> Add (a, b)
-                  | Base.Neg a -> Neg a
+                  | Base.Leaf -> Leaf
+                  | Base.Branch (a, b) -> Branch (a, b)
                 let _ = embed
               end
             include (((Recursion_schemes.Make)(Base))(Project))(Embed)

@@ -7,20 +7,18 @@ let expand_impl (src : string) : string =
   let ast' = Driver.map_structure ast in
   Format.asprintf "%a" Pprintast.structure ast'
 
-let%expect_test
-    "type t = Lit of int | Add of t * t | Neg of t: map applies f to recursive \
-     positions" =
+let%expect_test "Ptyp_constr: nullary type constructor (int) passed through" =
   print_string
     (expand_impl
        {|
-    type t = Lit of int | Add of t * t | Neg of t [@@deriving recursion_schemes]
+    type t = Zero | Succ of t | WithVal of int [@@deriving recursion_schemes]
   |});
   [%expect
     {|
     type t =
-      | Lit of int
-      | Add of t * t
-      | Neg of t [@@deriving recursion_schemes]
+      | Zero
+      | Succ of t
+      | WithVal of int [@@deriving recursion_schemes]
     include
       struct
         [@@@ocaml.warning "-60"]
@@ -30,14 +28,14 @@ let%expect_test
             module Base =
               struct
                 type nonrec 'a t =
-                  | Lit of int
-                  | Add of 'a * 'a
-                  | Neg of 'a
+                  | Zero
+                  | Succ of 'a
+                  | WithVal of int
                 let map f =
                   function
-                  | Lit a -> Lit a
-                  | Add (a, b) -> Add ((f a), (f b))
-                  | Neg a -> Neg (f a)
+                  | Zero -> Zero
+                  | Succ a -> Succ (f a)
+                  | WithVal a -> WithVal a
                 let _ = map
               end
             module Project =
@@ -46,9 +44,9 @@ let%expect_test
                 type nonrec t = t
                 let project =
                   function
-                  | Lit a -> Base.Lit a
-                  | Add (a, b) -> Base.Add (a, b)
-                  | Neg a -> Base.Neg a
+                  | Zero -> Base.Zero
+                  | Succ a -> Base.Succ a
+                  | WithVal a -> Base.WithVal a
                 let _ = project
               end
             module Embed =
@@ -57,9 +55,9 @@ let%expect_test
                 type nonrec t = t
                 let embed =
                   function
-                  | Base.Lit a -> Lit a
-                  | Base.Add (a, b) -> Add (a, b)
-                  | Base.Neg a -> Neg a
+                  | Base.Zero -> Zero
+                  | Base.Succ a -> Succ a
+                  | Base.WithVal a -> WithVal a
                 let _ = embed
               end
             include (((Recursion_schemes.Make)(Base))(Project))(Embed)
