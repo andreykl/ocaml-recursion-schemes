@@ -14,13 +14,13 @@ which applies all registered transformations (extensions, derivers, etc.).
 > we add recurion_schemes.ppx to the libraries stanza in the dune file). 
 4) Prints the result for the selected AST stage and output view:
 - `--stage raw|exp`
-  * raw : prints the parsed input AST (before running any PPX)
-  * exp : prints the AST after running ppxlib's driver (Driver.map_structure)
+  * `raw`: prints the parsed input AST (before running any PPX)
+  * `exp`: prints the AST after running ppxlib's driver (Driver.map_structure)
 - `--view tree|src`
-  * tree : prints an AST "tree" dump (like ocamlc -dparsetree). For this output
+  * `tree`: prints an AST "tree" dump (like ocamlc -dparsetree). For this output
   we convert ppxlib's selected AST representation into the compiler's current
   Parsetree and print it via Ocaml_common.Printast.
-  * src : pretty-prints the OCaml code (either before or after PPX, depending on --stage).
+  * `src`: pretty-prints the OCaml code (either before or after PPX, depending on --stage).
 
 ## Usage examples:
 
