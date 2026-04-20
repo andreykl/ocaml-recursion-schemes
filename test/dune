@@ -1,0 +1,71 @@
+(library
+ (name rec_tests)
+ (modules rec_test)
+ (inline_tests)
+ (libraries ppxlib compiler-libs.common ppx_expect recursion_schemes.ppx)
+ (preprocess
+  (pps ppx_expect)))
+
+(library
+ (name nonrec_tests)
+ (modules nonrec_test)
+ (inline_tests)
+ (libraries ppxlib compiler-libs.common ppx_expect recursion_schemes.ppx)
+ (preprocess
+  (pps ppx_expect)))
+
+(library
+ (name nat_nat_tests)
+ (modules nat_nat_test)
+ (inline_tests)
+ (libraries ppxlib compiler-libs.common ppx_expect recursion_schemes.ppx)
+ (preprocess
+  (pps ppx_expect)))
+
+(library
+ (name nat_t_tests)
+ (modules nat_t_test)
+ (inline_tests)
+ (libraries ppxlib compiler-libs.common ppx_expect recursion_schemes.ppx)
+ (preprocess
+  (pps ppx_expect)))
+
+(library
+ (name ctor_params012_tests)
+ (modules ctor_params012_test)
+ (inline_tests)
+ (libraries ppxlib compiler-libs.common ppx_expect recursion_schemes.ppx)
+ (preprocess
+  (pps ppx_expect)))
+
+(library
+ (name list_t_tests)
+ (modules list_t_test)
+ (inline_tests)
+ (libraries ppxlib compiler-libs.common ppx_expect recursion_schemes.ppx)
+ (preprocess
+  (pps ppx_expect)))
+
+(library
+ (name list_list_tests)
+ (modules list_list_test)
+ (inline_tests)
+ (libraries ppxlib compiler-libs.common ppx_expect recursion_schemes.ppx)
+ (preprocess
+  (pps ppx_expect)))
+
+(library
+ (name tree_t_tests)
+ (modules tree_t_test)
+ (inline_tests)
+ (libraries ppxlib compiler-libs.common ppx_expect recursion_schemes.ppx)
+ (preprocess
+  (pps ppx_expect)))
+
+(library
+ (name tree_tree_tests)
+ (modules tree_tree_test)
+ (inline_tests)
+ (libraries ppxlib compiler-libs.common ppx_expect recursion_schemes.ppx)
+ (preprocess
+  (pps ppx_expect)))

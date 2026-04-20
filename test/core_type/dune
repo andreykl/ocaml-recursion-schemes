@@ -1,0 +1,23 @@
+(library
+ (name ptyp_var)
+ (modules ptyp_var)
+ (inline_tests)
+ (libraries ppxlib compiler-libs.common ppx_expect recursion_schemes.ppx)
+ (preprocess
+  (pps ppx_expect)))
+
+(library
+ (name ptyp_tuple)
+ (modules ptyp_tuple)
+ (inline_tests)
+ (libraries ppxlib compiler-libs.common ppx_expect recursion_schemes.ppx)
+ (preprocess
+  (pps ppx_expect)))
+
+(library
+ (name ptyp_constr)
+ (modules ptyp_constr)
+ (inline_tests)
+ (libraries ppxlib compiler-libs.common ppx_expect recursion_schemes.ppx)
+ (preprocess
+  (pps ppx_expect)))

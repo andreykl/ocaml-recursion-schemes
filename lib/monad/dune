@@ -1,0 +1,3 @@
+(library
+ (public_name recursion_schemes.monad)
+ (name monad))
