@@ -44,7 +44,7 @@
     - ppxlib internally works with a "selected" AST (from the ppxlib/astlib
       world), which is not the same type as the compiler-libs Parsetree used by
       Ocaml_common.
-    - Therefore, for the "tree" mode we explicitly convert structures using the
+    - Therefore, for the "tree" view we explicitly convert structures using the
       Ppxlib_ast.Convert helpers. *)
 
 open Ppxlib
